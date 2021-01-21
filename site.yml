@@ -1,0 +1,29 @@
+---
+# Main playbook to deploy all the Ansible-Hadoop infraestructure.
+#
+
+- hosts: local
+  gather_facts: false
+  roles:
+    - role: ulliaas
+
+- hosts: master:worker
+  gather_facts: false
+  roles:
+    - role: common
+
+- hosts: worker
+  gather_facts: false
+  roles:
+    - role: workers
+
+- hosts: master
+  gather_facts: false
+  roles:
+    - role: management
+
+- hosts: namenode:datanode:local
+  gather_facts: true
+  roles:
+    - role: hadoop
+

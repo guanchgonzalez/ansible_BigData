@@ -1,0 +1,61 @@
+Dec 31 23:58:03 ec1.ccti.ull.es postfix/smtpd[17050]: connect from localhost.localdomain[127.0.0.1]
+Dec 31 23:58:03 ec1.ccti.ull.es postfix/smtpd[17050]: 7BCAE8C108: client=localhost.localdomain[127.0.0.1]
+Dec 31 23:58:03 ec1.ccti.ull.es postfix/cleanup[17978]: 7BCAE8C108: message-id=<510592855.61308.1293839865220.JavaMail.jboss@62.50.43.213>
+Dec 31 23:58:03 ec1.ccti.ull.es postfix/qmgr[30207]: 7BCAE8C108: from=<SpringerAlerts@springeronline.com>, size=193063, nrcpt=1 (queue active)
+Dec 31 23:58:03 ec1.ccti.ull.es postfix/smtp[17979]: 65C328C0DF: to=<damiandetorres@gmail.com>, relay=localhost[127.0.0.1], delay=0, status=sent (250 Ok: queued as 7BCAE8C108)
+Dec 31 23:58:03 ec1.ccti.ull.es postfix/qmgr[30207]: 65C328C0DF: removed
+Dec 31 23:58:03 ec1.ccti.ull.es postfix/smtpd[17050]: disconnect from localhost.localdomain[127.0.0.1]
+Dec 31 23:58:03 ec1.ccti.ull.es postfix/smtp[18113]: certificate peer name verification failed for gmail-smtp-in.l.google.com: CommonName mis-match: mx.google.com
+Dec 31 23:58:05 ec1.ccti.ull.es postfix/smtp[18113]: 7BCAE8C108: to=<damiandetorres@gmail.com>, relay=gmail-smtp-in.l.google.com[209.85.229.27], delay=2, status=sent (250 2.0.0 OK 1293839876 b40si22156791wek.153)
+Dec 31 23:58:05 ec1.ccti.ull.es postfix/qmgr[30207]: 7BCAE8C108: removed
+Dec 31 23:58:19 ec1.ccti.ull.es postfix/smtp[18115]: D80C18C12F: to=<leticiamh-@hotmaill.com>, relay=none, delay=107718, status=deferred (Host or domain name not found. Name service error for name=hotmaill.com type=MX: Host not found, try again)
+Dec 31 23:58:19 ec1.ccti.ull.es postfix/smtp[18114]: 1D23E8C13F: to=<leticiamh-@hotmaill.com>, relay=none, delay=221464, status=deferred (Host or domain name not found. Name service error for name=hotmaill.com type=MX: Host not found, try again)
+Dec 31 23:58:26 ec1.ccti.ull.es postfix/smtp[18116]: connect to dfe.uab.es[158.109.159.210]: Connection timed out (port 25)
+Dec 31 23:58:26 ec1.ccti.ull.es postfix/smtp[18117]: connect to bbtk.ull.es[193.145.118.38]: Connection timed out (port 25)
+Dec 31 23:58:26 ec1.ccti.ull.es postfix/smtp[18116]: 7B7728C12E: to=<mitorres@liceu.uab.es>, relay=none, delay=136078, status=deferred (connect to dfe.uab.es[158.109.159.210]: Connection timed out)
+Dec 31 23:58:26 ec1.ccti.ull.es postfix/smtp[18117]: 8DE078C12D: to=<dgarcia@bbtk.ull.es>, relay=none, delay=131261, status=deferred (connect to bbtk.ull.es[193.145.118.38]: Connection timed out)
+Dec 31 23:58:40 ec1.ccti.ull.es postfix/smtpd[17050]: connect from localhost.localdomain[127.0.0.1]
+Dec 31 23:58:40 ec1.ccti.ull.es postfix/smtpd[17050]: lost connection after CONNECT from localhost.localdomain[127.0.0.1]
+Dec 31 23:58:40 ec1.ccti.ull.es postfix/smtpd[17050]: disconnect from localhost.localdomain[127.0.0.1]
+Dec 31 23:58:48 ec1.ccti.ull.es postfix/smtpd[12060]: connect from systemon3.sis.ccti.ull.es[10.107.26.51]
+Dec 31 23:58:48 ec1.ccti.ull.es postfix/smtpd[12060]: disconnect from systemon3.sis.ccti.ull.es[10.107.26.51]
+Dec 31 23:58:49 ec1.ccti.ull.es postfix/smtpd[12060]: connect from unknown[10.100.2.1]
+Dec 31 23:58:49 ec1.ccti.ull.es postfix/smtpd[12060]: lost connection after HELO from unknown[10.100.2.1]
+Dec 31 23:58:49 ec1.ccti.ull.es postfix/smtpd[12060]: disconnect from unknown[10.100.2.1]
+Dec 31 23:59:50 ec1.ccti.ull.es postfix/smtpd[12060]: connect from unknown[10.100.2.1]
+Dec 31 23:59:50 ec1.ccti.ull.es postfix/smtpd[12060]: lost connection after HELO from unknown[10.100.2.1]
+Dec 31 23:59:50 ec1.ccti.ull.es postfix/smtpd[12060]: disconnect from unknown[10.100.2.1]
+Jan  1 00:00:01 ec1.ccti.ull.es postfix/smtpd[17050]: connect from localhost.localdomain[127.0.0.1]
+Jan  1 00:00:01 ec1.ccti.ull.es postfix/smtpd[17050]: disconnect from localhost.localdomain[127.0.0.1]
+Jan  1 00:00:51 ec1.ccti.ull.es postfix/smtpd[12060]: connect from unknown[10.100.2.1]
+Jan  1 00:00:51 ec1.ccti.ull.es postfix/smtpd[12060]: lost connection after HELO from unknown[10.100.2.1]
+Jan  1 00:00:51 ec1.ccti.ull.es postfix/smtpd[12060]: disconnect from unknown[10.100.2.1]
+Jan  1 00:01:11 ec1.ccti.ull.es postfix/smtpd[12060]: connect from systemon2.sis.ccti.ull.es[193.145.96.92]
+Jan  1 00:01:11 ec1.ccti.ull.es postfix/smtpd[12060]: disconnect from systemon2.sis.ccti.ull.es[193.145.96.92]
+Jan  1 00:01:40 ec1.ccti.ull.es postfix/smtpd[17050]: connect from localhost.localdomain[127.0.0.1]
+Jan  1 00:01:40 ec1.ccti.ull.es postfix/smtpd[17050]: lost connection after CONNECT from localhost.localdomain[127.0.0.1]
+Jan  1 00:01:40 ec1.ccti.ull.es postfix/smtpd[17050]: disconnect from localhost.localdomain[127.0.0.1]
+Jan  1 00:01:52 ec1.ccti.ull.es postfix/smtpd[12060]: connect from unknown[10.100.2.1]
+Jan  1 00:01:52 ec1.ccti.ull.es postfix/smtpd[12060]: lost connection after HELO from unknown[10.100.2.1]
+Jan  1 00:01:52 ec1.ccti.ull.es postfix/smtpd[12060]: disconnect from unknown[10.100.2.1]
+Jan  1 00:02:30 ec1.ccti.ull.es postfix/anvil[2953]: statistics: max connection rate 2/60s for (smtp:10.4.9.101) at Dec 31 23:58:03
+Jan  1 00:02:30 ec1.ccti.ull.es postfix/anvil[2953]: statistics: max connection count 1 for (smtp:193.145.96.92) at Dec 31 23:52:55
+Jan  1 00:02:30 ec1.ccti.ull.es postfix/anvil[2953]: statistics: max message rate 2/60s for (smtp:10.4.9.101) at Dec 31 23:58:03
+Jan  1 00:02:30 ec1.ccti.ull.es postfix/anvil[2953]: statistics: max recipient rate 2/60s for (smtp:10.4.9.101) at Dec 31 23:58:03
+Jan  1 00:02:30 ec1.ccti.ull.es postfix/anvil[2953]: statistics: max cache size 4 at Dec 31 23:53:50
+Jan  1 00:02:53 ec1.ccti.ull.es postfix/smtpd[12060]: connect from unknown[10.100.2.1]
+Jan  1 00:02:53 ec1.ccti.ull.es postfix/smtpd[12060]: lost connection after HELO from unknown[10.100.2.1]
+Jan  1 00:02:53 ec1.ccti.ull.es postfix/smtpd[12060]: disconnect from unknown[10.100.2.1]
+Jan  1 00:02:55 ec1.ccti.ull.es postfix/smtpd[12060]: connect from systemon2.sis.ccti.ull.es[193.145.96.92]
+Jan  1 00:02:55 ec1.ccti.ull.es postfix/smtpd[12060]: disconnect from systemon2.sis.ccti.ull.es[193.145.96.92]
+Jan  1 00:03:26 ec1.ccti.ull.es postfix/smtpd[12060]: connect from mp01.ccti.ull.es[10.4.9.101]
+Jan  1 00:03:26 ec1.ccti.ull.es postfix/smtpd[12060]: A43B18C140: client=mp01.ccti.ull.es[10.4.9.101]
+Jan  1 00:03:26 ec1.ccti.ull.es postfix/cleanup[19236]: A43B18C140: message-id=<NM-298-45390-45750453-1293840190@mailgen-0-5>
+Jan  1 00:03:26 ec1.ccti.ull.es postfix/qmgr[30207]: A43B18C140: from=<bounces-298-45750453@bounces.freelotto.com>, size=18407, nrcpt=1 (queue active)
+Jan  1 00:03:26 ec1.ccti.ull.es postfix/smtpd[12060]: disconnect from mp01.ccti.ull.es[10.4.9.101]
+Jan  1 00:03:26 ec1.ccti.ull.es postfix/smtpd[19238]: connect from localhost.localdomain[127.0.0.1]
+Jan  1 00:03:26 ec1.ccti.ull.es postfix/smtpd[19238]: BD7BA8C163: client=localhost.localdomain[127.0.0.1]
+Jan  1 00:03:26 ec1.ccti.ull.es postfix/cleanup[19236]: BD7BA8C163: message-id=<NM-298-45390-45750453-1293840190@mailgen-0-5>
+Jan  1 00:03:26 ec1.ccti.ull.es postfix/qmgr[30207]: BD7BA8C163: from=<bounces-298-45750453@bounces.freelotto.com>, size=18599, nrcpt=1 (queue active)
+Jan  1 00:03:26 ec1.ccti.ull.es postfix/smtp[19237]: A43B18C140: to=<norberto.batista@gmail.com>, relay=localhost[127.0.0.1], delay=0, status=sent (250 Ok: queued as BD7BA8C163)
+Jan  1 00:03:26 ec1.ccti.ull.es postfix/qmgr[30207]: A43B18C140: removed

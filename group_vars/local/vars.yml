@@ -8,6 +8,7 @@ ovirt_password: "{{ vault_ovirt_password }}"
 # VM names
 
 prefix: id-g6-rgl-
+subnet: workers
 
 nodes:
   - node_sufix: wn02

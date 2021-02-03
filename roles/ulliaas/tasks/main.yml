@@ -41,7 +41,7 @@
         nic_boot_protocol: dhcp
         nic_on_boot: True
     cloud_init:
-      host_name: "{{ prefix }}{{ item.node_sufix }}"
+      host_name: "{{ prefix }}{{ item.node_sufix }}.{{ subnet }}.local"
       user_name: ansible
       root_password: $6$3diC789eX$WZPkCdIrIm11cbZyhx/uwsydqgqEb1hsBvOXIF31ngjqxYhGyXMdaHZrwsf8vZHqEBoqPoXhWANPR/itAEU7l.
       authorized_ssh_keys: "{{ ansible_ssh_keys }}"

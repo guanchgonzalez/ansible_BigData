@@ -286,14 +286,6 @@
         create: yes
       loop: "{{ groups.datanode }}"
 
-    - name: Create data path
-      file:
-        path: /home/hadoop/hdfs
-        state: directory
-        owner: hadoop
-        group: hadoop
-        mode: '0700'
-
   become: true
   become_user: hadoop
   when: ( group_names | select('match', 'local') | list | length ) == 0

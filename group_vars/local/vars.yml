@@ -7,13 +7,17 @@ ovirt_password: "{{ vault_ovirt_password }}"
 
 # VM names
 
-prefix: id-g6-rgl-
+#prefix: id-g6-rgl-
+prefix: tdm-rgl-
 subnet: workers
 
 nodes:
-  - node_sufix: wn02
-  - node_sufix: wn03
-  - node_sufix: wn04
+#  - node_sufix: wn02
+#  - node_sufix: wn03
+#  - node_sufix: wn04
+  - node_sufix: wn05
+  - node_sufix: wn06
+  - node_sufix: wn07
 
 # VM's to be removed
 
@@ -21,6 +25,9 @@ removing:
 #  - node_sufix: wn02
 #  - node_sufix: wn03
 #  - node_sufix: wn04
+#  - node_sufix: wn05
+#  - node_sufix: wn06
+#  - node_sufix: wn07
 
 
 # VM networks

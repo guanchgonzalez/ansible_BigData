@@ -7,27 +7,19 @@
     dest: /etc/motd
   become: true
 
-- name: Update all OS packages
-  yum:
-    name: '*'
-    state: latest
-
-- name: Install aditional packages
-  yum:
-    name:
-      - vim
-      - mlocate
-      - bind*
-      - binutils
-      - tar
-      - traceroute
-      - tree
-      - wget
-    state: latest
-
-- name: Update mlocate DB (register all the files into the VM)
-  command: updatedb
-  become: true
+- name: Include the YUM update role
+  include_role:
+    name: rpms
+  vars:
+    packages:
+      - regex_name: vim
+      - regex_name: mlocate
+      - regex_name: bind*
+      - regex_name: binutils
+      - regex_name: tar
+      - regex_name: traceroute
+      - regex_name: tree
+      - regex_name: wget
 
 #- name: Update local hostname
 #  command: nslookup `ip a show dev ens4 | grep inet | sed -e 's/\/24.*$//' | awk '{print $NF}'` | awk '$1 ~ /arpa/ {print substr($NF, 1, length($NF)-1)}' > /etc/hostname

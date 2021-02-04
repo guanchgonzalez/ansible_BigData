@@ -7,7 +7,8 @@
   roles:
     - role: ulliaas
 
-- hosts: master:worker
+#- hosts: master:worker
+- hosts: tdm_master:tdm_workers
   gather_facts: false
   roles:
     - role: common
@@ -22,8 +23,13 @@
   roles:
     - role: management
 
-- hosts: namenode:datanode:local
-  gather_facts: true
-  roles:
-    - role: hadoop
-
+#- hosts: namenode:datanode:local
+#  gather_facts: true
+#  roles:
+#    - role: hadoop
+#
+#- hosts: tdm-master:tdm-workers
+#  gather_facts: false
+#  roles:
+#    - role: spark
+#

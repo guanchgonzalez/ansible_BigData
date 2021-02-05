@@ -1,0 +1,92 @@
+---
+# User and its environmnent creation tasks.
+# Target hosts: N/A
+# Vars: username
+#
+
+- name: Creating user
+  block:
+    - name: Create user group
+      group:
+        name: "{{ username }}"
+        state: present
+
+    - name: Encrypt usar password with openssl
+      command: echo "{{ username }}" | openssl passwd -6 -stdin
+      register: userpass
+      ignore_errors: true
+
+    - name: Create user with the same password
+      user:
+        name: "{{ username }}"
+        group: "{{ username }}"
+        password: "{{ userpass.rc }}"
+        generate_ssh_key: yes
+
+  when: ( group_names | select('match', 'local') | list | length ) == 0
+
+- name: Deploy SSH keys relationships on every cluster node
+  block:
+    - name: Create user authorized_keys file and grant read permissions both id_rsa.pub and authorized_keys files
+      file:
+        path: "{{ item }}"
+        state: touch
+        mode: '0644'
+        modification_time: preserve
+        access_time: preserve
+      with_items:
+        - "/home/{{ username }}/.ssh/id_rsa.pub"
+        - "/home/{{ username }}/.ssh/authorized_keys"
+        - "/home/{{ username }}/.ssh/known_hosts"
+
+    - name: Create the .ssh config file
+      copy:
+        dest: "/home/{{ username }}/.ssh/config"
+        content: StrictHostKeyChecking no
+        owner: "{{ username }}"
+        group: "{{ username }}"
+        mode: '0644'
+
+    - name: Include the user public key into its authorized_keys file
+      shell: |
+        encr=$(awk '{print $2}' /home/{{ username }}/.ssh/id_rsa.pub)
+        grep ${encr} /home/{{ username }}/.ssh/authorized_keys
+        [[ $? -ne 0 ]] && cat /home/{{ username }}/.ssh/id_rsa.pub >> /home/{{ username }}/.ssh/authorized_keys
+      ignore_errors: yes
+
+  become: true
+  become_user: "{{ username }}"
+  when: ( group_names | select('match', 'local') | list | length ) == 0
+
+- name: Enable SSH login to remote users
+  shell: |
+    grep AllowUsers /etc/ssh/sshd_config | grep "{{ username }}"
+    if [ $? -ne 0 ]
+    then
+      line=$(grep AllowUsers /etc/ssh/sshd_config 2>/dev/null)
+      line=${line}" "{{ username }}
+      sed -i "s/AllowUsers.*$/${line}/" /etc/ssh/sshd_config
+    fi
+  become: true
+  when: ( group_names | select('match', 'local') | list | length ) == 0
+
+- name: Deploy the user profile.d shell script
+  block:
+    - name: Create an empty user profile.d shell script
+      file:
+        path: /etc/profile.d/{{ username }}.sh
+        owner: root
+        group: root
+        mode: 0644
+        state: touch
+
+    - name: Fill the user profile.d shell script
+      copy:
+        dest: /etc/profile.d/{{ username }}.sh
+        content: |
+          export ( {{ username }} | upper )_HOME=/home/{{ username }}/
+          export PATH=${( {{ username }} | upper )_HOME}/bin:${PATH}
+
+  when: ( group_names | select('match', 'local') | list | length ) == 0
+
+...

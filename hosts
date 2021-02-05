@@ -11,6 +11,7 @@ id-g6-rgl-master.management.local ansible_connection=local ansible_python_interp
 [worker]
 #id-g6-rgl-wn01.workers.local
 id-g6-rgl-wn0[1:4].workers.local
+tdm-rgl-wn0[5:7].workers.local
 
 [namenode]
 # id-g6-rgl-master.management.local ansible_connection=local ansible_python_interpreter=/usr/bin/python3.6
@@ -22,6 +23,6 @@ id-g6-rgl-wn0[1:3].workers.local
 [tdm_master]
 tdm-rgl-wn05.workers.local
 
-[tdm_workers]
+[tdm_worker]
 tdm-rgl-wn0[6:7].workers.local
 

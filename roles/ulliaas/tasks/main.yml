@@ -1,6 +1,7 @@
 ---
-# Deploy a VM either in management or workers subnet, to be a master or a worker node
-# The Router, the DHCP-DNS and the Master server VM's must exists prior to launch this playbook
+# Deploy a VM either in management or workers subnet, to be a master or a worker node.
+# The Router, the DHCP-DNS and the Master server VM's must exists prior to launch this playbook.
+# Target host: local
 #
 
 - name: Login to IaaS
@@ -119,3 +120,4 @@
     ovirt_auth: "{{ ovirt_auth }}"
     state: absent
 
+...

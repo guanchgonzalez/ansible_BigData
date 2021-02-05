@@ -1,5 +1,6 @@
 ---
-# Deploy common elements for every Hadoop node
+# Deploy the Hadoop infraestucture on every Hadoop node.
+# Target hosts: namenode, datanode
 #
 
 - name: Creating Hadoop user
@@ -388,3 +389,4 @@
   become: true
   when: ( group_names | select('match', 'namenode') | list | length ) > 0
 
+...

@@ -1,5 +1,7 @@
 ---
-# Common tasks for every VM deployed
+# Common tasks for every VM deployed.
+# Target hosts: worker
+#
 
 - name: Check availability of VM's
   copy:
@@ -112,3 +114,4 @@
   when: reboot_required
   ignore_errors: yes
 
+...

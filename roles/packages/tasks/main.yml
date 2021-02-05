@@ -1,0 +1,30 @@
+---
+# Yum tasks (to be included into other role plays).
+# Target hosts: N/A
+# Vars: every RPM needed by the parent role
+#
+
+- name: Update all OS packages
+  yum:
+    name: '*'
+    state: latest
+
+- name: Install per parent role additional packages
+  yum:
+    name: "{{ item.regex_name }}"
+    state: latest
+  with_items: "{{ packages }}"
+
+- name: Yum autoremove
+  yum:
+    autoremove: yes
+
+- name: Yum clean all
+  command: yum clean all
+  become: true
+
+- name: Update mlocate DB (register all the files into the VM)
+  command: updatedb
+  become: true
+
+...

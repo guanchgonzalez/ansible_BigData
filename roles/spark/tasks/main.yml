@@ -1,0 +1,36 @@
+---
+# Deploy the Spark infraestructure on every cluster node.
+# Target hosts: tdm_master:tdm_worker:local
+#
+
+- name: Check availability of VM's
+  copy:
+    content: "  VM gestionada por los roles/playbooks de Ansible.\n"
+    dest: /etc/motd
+  become: true
+
+- name: Include the YUM update role
+  include_role:
+    name: packages
+  vars:
+    packages:
+      - regex_name: ncdu
+      - regex_name: epel-release
+      - regex_name: python38
+      - regex_name: java
+      - regex_name: java-devel
+  when: ( group_names | select('match', 'local') | list | length ) == 0
+
+- name: Include the Spark user creation role
+  include_role:
+    name: user_creation
+  vars:
+    username: 'spark'
+  when: ( group_names | select('match', 'local') | list | length ) == 0
+
+- name: Install pyspark library
+  pip:
+    name: pyspark
+  when: ( group_names | select('match', 'local') | list | length ) == 0
+
+...

@@ -111,7 +111,7 @@
 #
 - name: Reboot the VM
   reboot:
-  when: reboot_required
+  when: reboot_required.rc == 0
   ignore_errors: yes
 
 ...

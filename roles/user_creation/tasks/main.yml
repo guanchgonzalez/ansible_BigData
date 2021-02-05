@@ -1,5 +1,5 @@
 ---
-# User and its environmnent creation tasks.
+# User and its environment creation tasks.
 # Target hosts: N/A
 # Vars: username
 #
@@ -72,21 +72,22 @@
 
 - name: Deploy the user profile.d shell script
   block:
-    - name: Create an empty user profile.d shell script
-      file:
-        path: /etc/profile.d/{{ username }}.sh
+    - name: Deploy the user profile.d shell script template
+      copy:
+        src: generic_profile.sh
+        dest: /etc/profile.d/{{ username }}.sh
         owner: root
         group: root
-        mode: 0644
-        state: touch
+        mode: '0644'
 
-    - name: Fill the user profile.d shell script
-      copy:
-        dest: /etc/profile.d/{{ username }}.sh
-        content: |
-          export ( {{ username }} | upper )_HOME=/home/{{ username }}/
-          export PATH=${( {{ username }} | upper )_HOME}/bin:${PATH}
+    - name: Substitute the username into the user profile.d shell script
+      shell: |
+        sed -i 's/__var__/{{ username | upper }}/' /etc/profile.d/{{ username }}.sh
+        sed -i 's/__var__/{{ username }}/' /etc/profile.d/{{ username }}.sh
+      args:
+        warn: no
 
+  become: true
   when: ( group_names | select('match', 'local') | list | length ) == 0
 
 ...

@@ -3,7 +3,7 @@
 #
 
 #- hosts: local
-#  gather_facts: false
+# gather_facts: false
 #  roles:
 #    - role: ulliaas
 #
@@ -27,8 +27,10 @@
 #  roles:
 #    - role: hadoop
 #
+#- hosts: tdm_master:tdm_worker:local
 - hosts: tdm_master:tdm_worker:local
   gather_facts: false
   roles:
     - role: spark
 
+...

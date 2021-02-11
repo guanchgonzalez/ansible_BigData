@@ -2,6 +2,6 @@
 
 # Tarball file name
 
-tarball: none
+tarball: spark-3.0.1-bin-hadoop3.2.tgz
 
 ...

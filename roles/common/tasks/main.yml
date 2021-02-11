@@ -11,7 +11,7 @@
 
 - name: Include the YUM update role
   include_role:
-    name: rpms
+    name: packages
   vars:
     packages:
       - regex_name: vim

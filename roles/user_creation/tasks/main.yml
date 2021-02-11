@@ -4,23 +4,31 @@
 # Vars: username
 #
 
-- name: Creating user
+- name: Encrypt usar password with openssl
+  shell: |
+    pass=`echo {{ username }} | openssl passwd -6 -stdin`
+    echo "---
+    username_SHA512_pass: ${pass}
+    ..." > /home/ansible/roles/user_creation/vars/main.yml
+  ignore_errors: true
+  when: ( group_names | select('match', 'local') | list | length ) > 0
+
+- name: Reloading vars file and creating user
   block:
+    - name: Reload vars file
+      include_vars:
+        dir: /home/ansible/roles/user_creation/vars
+
     - name: Create user group
       group:
         name: "{{ username }}"
         state: present
 
-    - name: Encrypt usar password with openssl
-      command: echo "{{ username }}" | openssl passwd -6 -stdin
-      register: userpass
-      ignore_errors: true
-
     - name: Create user with the same password
       user:
         name: "{{ username }}"
         group: "{{ username }}"
-        password: "{{ userpass.rc }}"
+        password: "{{ username_SHA512_pass }}"
         generate_ssh_key: yes
 
   when: ( group_names | select('match', 'local') | list | length ) == 0
@@ -68,6 +76,12 @@
       sed -i "s/AllowUsers.*$/${line}/" /etc/ssh/sshd_config
     fi
   become: true
+  when: ( group_names | select('match', 'local') | list | length ) == 0
+
+- name: Restart SSH service
+  service:
+    name: sshd
+    state: restarted
   when: ( group_names | select('match', 'local') | list | length ) == 0
 
 - name: Deploy the user profile.d shell script

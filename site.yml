@@ -2,16 +2,17 @@
 # Main playbook to deploy all the Ansible-Hadoop and TDM infraestructure.
 #
 
-#- hosts: local
-#  gather_facts: false
-#  roles:
-#    - role: ulliaas
-#
+- hosts: local
+  gather_facts: false
+  roles:
+    - role: ulliaas
+
 #- hosts: master:worker
-#  gather_facts: false
-#  roles:
-#    - role: common
-#
+- hosts: idm-tdm-rgl-wn0[1-2].workers.local
+  gather_facts: false
+  roles:
+    - role: common
+
 #- hosts: worker
 #  gather_facts: false
 #  roles:
@@ -40,12 +41,5 @@
 #      become: true
 #      when: ( group_names | select('match', 'local') | list | length ) == 0
 #      ignore_errors: true
-#
-- hosts: tdm_master
-  gather_facts: true
-  tasks:
-    - name: Debug. Show hostvars.inventory_hostname
-      debug:
-        var: hostvars[inventory_hostname]
 
 ...

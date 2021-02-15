@@ -23,14 +23,6 @@
       - regex_name: tree
       - regex_name: wget
 
-#- name: Update local hostname
-#  command: nslookup `ip a show dev ens4 | grep inet | sed -e 's/\/24.*$//' | awk '{print $NF}'` | awk '$1 ~ /arpa/ {print substr($NF, 1, length($NF)-1)}' > /etc/hostname
-#  become: true
-
-#- name: Update local hostname
-#  hostname:
-#    name: "{{ inventory_hostname }}"
-#
 - name: Generate ansible user SSH keys
   user:
     name: ansible

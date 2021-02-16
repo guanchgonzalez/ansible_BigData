@@ -103,7 +103,7 @@
 #
 - name: Reboot the VM
   reboot:
-  when: reboot_required.rc == 0
+  when: reboot_required.reboot_required
   ignore_errors: yes
 
 ...

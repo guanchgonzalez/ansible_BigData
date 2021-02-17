@@ -8,7 +8,6 @@
     - role: ulliaas
 
 - hosts: master:worker
-#- hosts: idm-tdm-rgl-wn0[1-2].workers.local
   gather_facts: false
   roles:
     - role: common

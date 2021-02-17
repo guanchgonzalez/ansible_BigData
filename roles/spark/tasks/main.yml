@@ -47,6 +47,27 @@
   vars:
     username: 'spark'
 
+- name: Deploying the Spark master public key around the Spark slaves
+  block:
+    - name: Install sshpass
+      yum:
+        name: sshpass
+        state: latest
+
+    - name: Remove previous Spark slaves entries from the Spark master known_hosts file
+      shell: sed -i "/^{{ item }}.*$/d" /home/spark/.ssh/known_hosts
+      become: true
+      become_user: spark
+      loop: "{{ groups.tdm_worker }}"
+
+    - name: Copy the spark public key to every Spark slave
+      shell: sshpass -p spark ssh-copy-id -i /home/spark/.ssh/id_rsa.pub spark@{{ item }}
+      become: true
+      become_user: spark
+      loop: "{{ groups.tdm_worker }}"
+
+  when: ( group_names | select('match', 'tdm_master') | list | length ) > 0
+
 - name: Install pyspark library
   pip:
     name: pyspark
@@ -107,6 +128,7 @@
     - name: Fill the spark-env.sh file
       blockinfile:
         path: /home/spark/conf/spark-env.sh
+        mode: '0755'
         insertafter: EOF
         marker: "# {mark} ANSIBLE MANAGED BLOCK"
         block: |
@@ -142,6 +164,7 @@
     - name: Fill the spark-defaults.conf file
       blockinfile:
         path: /home/spark/conf/spark-defaults.conf
+        mode: '0755'
         insertafter: EOF
         marker: "# {mark} ANSIBLE MANAGED BLOCK"
         block: |

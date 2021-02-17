@@ -30,7 +30,7 @@
 
   when: ( group_names | select('match', 'local') | list | length ) == 0
 
-- name: Deploy SSH keys relationships on every Hadoop node
+- name: Deploying SSH keys relationships on every Hadoop node
   block:
     - name: Create hadoop user authorized_keys file and grant read permissions both id_rsa.pub and authorized_keys files
       file:

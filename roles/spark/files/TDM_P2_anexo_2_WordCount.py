@@ -14,7 +14,7 @@ sc = SparkContext(conf=conf)
 sc
 
 # read text file
-f = sc.textFile("/var/log/boot.log")
+f = sc.textFile("/var/log/dnf.log")
 
 # define map and reduce transformations
 wc = f.flatMap(lambda line: line.split(' ')) \

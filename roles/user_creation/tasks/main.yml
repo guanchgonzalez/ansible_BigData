@@ -4,7 +4,7 @@
 # Vars: username
 #
 
-- name: Encrypt usar password with openssl
+- name: Encrypt user password with openssl
   shell: |
     pass=`echo {{ username }} | openssl passwd -6 -stdin`
     echo "---

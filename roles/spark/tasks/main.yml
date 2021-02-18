@@ -17,28 +17,6 @@
       - regex_name: ncdu
       - regex_name: epel-release
       - regex_name: python38
-      - regex_name: java
-      - regex_name: java-devel
-  when: ( group_names | select('match', 'local') | list | length ) == 0
-
-- name: Deploying the Java profile.d shell script
-  block:
-    - name: Create an empty Java profile.d file
-      file:
-        path: /etc/profile.d/java.sh
-        owner: root
-        group: root
-        mode: '0644'
-        state: touch
-
-    - name: Fill the Java profile.d file
-      copy:
-        dest: /etc/profile.d/java.sh
-        content: |
-          export JAVA_HOME=/etc/alternatives/jre
-          export PATH=${JAVA_HOME}/bin:${PATH}
-
-  become: true
   when: ( group_names | select('match', 'local') | list | length ) == 0
 
 - name: Include the Spark user creation role
@@ -49,11 +27,6 @@
 
 - name: Deploying the Spark master public key around the Spark slaves
   block:
-    - name: Install sshpass
-      yum:
-        name: sshpass
-        state: latest
-
     - name: Remove previous Spark slaves entries from the Spark master known_hosts file
       shell: sed -i "/^{{ item }}.*$/d" /home/spark/.ssh/known_hosts
       become: true
@@ -75,9 +48,9 @@
 
 - name: Download the latest Spark tarball and set its name as a variable into the role vars file
   shell: |
-    spark_version=$(wget -qO- https://archive.apache.org/dist/spark/ | grep 'spark-[0-9]\.*' | grep -iv '\-[a-z]' | sed -e 's/.*href=//' | cut -d'"' -f2 | sort | tail -1)
-    file=$(wget -qO- https://archive.apache.org/dist/spark/${spark_version} | grep -i 'bin-hadoop[1-9\.*]*.tgz"' | sed -e 's/.*href=//' | cut -d'"' -f2 | sort | tail -1)
-    wget -qO /home/ansible/roles/spark/files/${file} https://archive.apache.org/dist/spark/${spark_version}${file}
+    product_version=$(wget -qO- https://archive.apache.org/dist/spark/ | grep 'folder\.gif' | grep '[0-9]\.[0-9]*/<' | sed -e 's/.*href=//' | cut -d'"' -f2 | sort -V | tail -1)
+    file=$(wget -qO- https://archive.apache.org/dist/spark/${product_version} | grep 'compressed\.gif' | grep -i 'bin-hadoop[1-9\.*]*.tgz"' | sed -e 's/.*href=//' | cut -d'"' -f2 | sort -V | tail -1)
+    wget -qO /home/ansible/roles/spark/files/${file} https://archive.apache.org/dist/spark/${product_version}${file}
     sed -i "s/tarball.*$/tarball: ${file}/" /home/ansible/roles/spark/vars/main.yml
   ignore_errors: yes
   when: ( group_names | select('match', 'local') | list | length ) > 0
@@ -97,7 +70,7 @@
         mode: '0755'
         extra_opts: [--strip-components=1]
 
-    - name: Delete the tarball
+    - name: Delete the tarball in the Spark cluster servers
       file:
         path: "/home/spark/{{ tarball }}"
         state: absent
@@ -221,5 +194,11 @@
   become: true
   become_user: spark
   when: ( group_names | select('match', 'tdm_master') | list | length ) > 0
+
+- name: Delete the tarball from the Ansible server
+  file:
+    path: "/home/ansible/roles/spark/files/{{ tarball }}"
+    state: absent
+  when: ( group_names | select('match', 'local') | list | length ) > 0
 
 ...

@@ -14,14 +14,38 @@
     name: packages
   vars:
     packages:
-      - regex_name: vim
-      - regex_name: mlocate
       - regex_name: bind*
       - regex_name: binutils
+      - regex_name: java
+      - regex_name: java-devel
+      - regex_name: ksh
+      - regex_name: mlocate
+      - regex_name: sshpass
       - regex_name: tar
       - regex_name: traceroute
       - regex_name: tree
+      - regex_name: vim
       - regex_name: wget
+
+- name: Deploying the Java profile.d shell script
+  block:
+    - name: Create an empty Java profile.d file
+      file:
+        path: /etc/profile.d/java.sh
+        owner: root
+        group: root
+        mode: '0644'
+        state: touch
+ 
+    - name: Fill the Java profile.d file
+      copy:
+        dest: /etc/profile.d/java.sh
+        content: |
+          export JAVA_HOME=/etc/alternatives/jre
+          export PATH=${JAVA_HOME}/bin:${PATH}
+ 
+  become: true
+  when: ( group_names | select('match', 'local') | list | length ) == 0
 
 - name: Generate ansible user SSH keys
   user:

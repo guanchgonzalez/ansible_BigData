@@ -1,0 +1,96 @@
+---
+# Deploy the Kafka infraestructure on every cluster node.
+# Target hosts: tdm_master:local
+#
+
+- name: Check availability of VM's
+  copy:
+    content: "  VM gestionada por los roles/playbooks de Ansible.\n"
+    dest: /etc/motd
+  become: true
+
+- name: Include the YUM update role
+  include_role:
+    name: packages
+  vars:
+    packages:
+      - regex_name: nmap
+  when: ( group_names | select('match', 'local') | list | length ) == 0
+
+- name: Include the Kafka user creation role
+  include_role:
+    name: user_creation
+  vars:
+    username: 'kafka'
+
+- name: Deploying the Kafka master public key around the Kafka slaves
+  block:
+    - name: Remove previous Kafka slaves entries from the Kafka master known_hosts file
+      shell: sed -i "/^{{ item }}.*$/d" /home/kafka/.ssh/known_hosts
+      become: true
+      become_user: kafka
+      loop: "{{ groups.tdm_worker }}"
+
+    - name: Copy the kafka public key to every Kafka slave
+      shell: sshpass -p kafka ssh-copy-id -i /home/kafka/.ssh/id_rsa.pub kafka@{{ item }}
+      become: true
+      become_user: kafka
+      loop: "{{ groups.tdm_worker }}"
+
+  when: ( group_names | select('match', 'tdm_master') | list | length ) > 0
+
+- name: Download the latest Kafka tarball and set its name as a variable into the role vars file
+  shell: |
+    product_version=$(wget -qO- https://archive.apache.org/dist/kafka/ | grep 'folder\.gif' | grep '[0-9]\.[0-9]*/<' | grep -iv '\-[a-z]' | sed -e 's/.*href=//' | cut -d'"' -f2 | sort -V | tail -1)
+    file=$(wget -qO- https://archive.apache.org/dist/kafka/${product_version} | grep 'compressed\.gif' | sed 's/.*href=//' | cut -d'"' -f2 | grep -iv '\-[a-z]*.tgz' | sort -V | tail -1)
+    wget -qO /home/ansible/roles/kafka/files/${file} https://archive.apache.org/dist/kafka/${product_version}${file}
+    sed -i "s/tarball.*$/tarball: ${file}/" /home/ansible/roles/kafka/vars/main.yml
+  ignore_errors: yes
+  when: ( group_names | select('match', 'local') | list | length ) > 0
+
+- name: Reload vars file
+  include_vars:
+    dir: /home/ansible/roles/kafka/vars
+
+- name: Deploying Kafka in the Spark master
+  block:
+    - name: Decompress the tarball
+      unarchive:
+        src: "{{ tarball }}"
+        dest: /home/kafka
+        owner: kafka
+        group: kafka
+        mode: '0755'
+        extra_opts: [--strip-components=1]
+
+    - name: Delete the tarball
+      file:
+        path: "/home/kafka/{{ tarball }}"
+        state: absent
+
+    - name: Create the local directory
+      file:
+        path: /home/kafka/local
+        mode: '0755'
+        state: directory
+
+    - name: Create the local subdirectories
+      file:
+        path: "/home/kafka/local/{{ item }}"
+        mode: '0755'
+        state: directory
+      loop:
+        - 'zookeeper'
+        - 'logs'
+
+  become: true
+  become_user: kafka
+  when: ( group_names | select('match', 'local') | list | length ) == 0
+
+- name: Delete the tarball from the Ansible server
+  file:
+    path: "/home/ansible/roles/kafka/files/{{ tarball }}"
+    state: absent
+  when: ( group_names | select('match', 'local') | list | length ) > 0
+
+...

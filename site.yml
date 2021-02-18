@@ -2,16 +2,16 @@
 # Main playbook to deploy all the Ansible-Hadoop and TDM infraestructure.
 #
 
-- hosts: local
-  gather_facts: false
-  roles:
-    - role: ulliaas
-
-- hosts: master:worker
-  gather_facts: false
-  roles:
-    - role: common
-
+#- hosts: local
+#  gather_facts: false
+#  roles:
+#    - role: ulliaas
+#
+#- hosts: master:worker
+#  gather_facts: false
+#  roles:
+#    - role: common
+#
 #- hosts: worker
 #  gather_facts: false
 #  roles:
@@ -22,10 +22,10 @@
 #  roles:
 #    - role: hadoop
 #
-- hosts: tdm_master:tdm_worker:local
-  gather_facts: true
-  roles:
-   - role: spark
+#- hosts: tdm_master:tdm_worker:local
+#  gather_facts: true
+#  roles:
+#   - role: spark
 #  tasks:
 #    - name: Remove spark user environment
 #      shell: |
@@ -35,11 +35,11 @@
 #      become: true
 #      when: ( group_names | select('match', 'local') | list | length ) == 0
 #      ignore_errors: true
-
-#- hosts: tdm_master:local
-#  gather_facts: false
-#  roles:
-#    - role: kafka
+#
+- hosts: tdm_master:tdm_worker:local
+  gather_facts: false
+  roles:
+    - role: kafka
 #  tasks:
 #    - name: Remove Kafka user environment
 #      shell: |
@@ -49,5 +49,5 @@
 #      become: true
 #      when: ( group_names | select('match', 'local') | list | length ) == 0
 #      ignore_errors: true
-#
+
 ...

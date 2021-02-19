@@ -17,6 +17,7 @@
       - regex_name: ncdu
       - regex_name: epel-release
       - regex_name: python38
+      - regex_name: scala
   when: ( group_names | select('match', 'local') | list | length ) == 0
 
 - name: Include the Spark user creation role

@@ -1,5 +1,5 @@
 ---
-# Common tasks for every VM deployed.
+# Initial tasks for every VM deployed.
 # Target hosts: worker
 #
 
@@ -32,20 +32,20 @@
 
 - name: Deploying the Java profile.d shell script
   block:
-    - name: Create an empty Java profile.d file
-      file:
-        path: /etc/profile.d/java.sh
-        owner: root
-        group: root
-        mode: '0644'
-        state: touch
+  - name: Create an empty Java profile.d file
+    file:
+      path: /etc/profile.d/java.sh
+      owner: root
+      group: root
+      mode: '0644'
+      state: touch
  
-    - name: Fill the Java profile.d file
-      copy:
-        dest: /etc/profile.d/java.sh
-        content: |
-          export JAVA_HOME=/etc/alternatives/jre
-          export PATH=${JAVA_HOME}/bin:${PATH}
+  - name: Fill the Java profile.d file
+    copy:
+      dest: /etc/profile.d/java.sh
+      content: |
+        export JAVA_HOME=/etc/alternatives/jre
+        export PATH=${JAVA_HOME}/bin:${PATH}
  
   become: true
   when: ( group_names | select('match', 'local') | list | length ) == 0
@@ -66,40 +66,45 @@
 
 - name: Enabling ServerAliveInterval and ServerAliveCountMax in SSH service as client
   block:
-    - name: Check if ServerAlive parameters are enable
-      shell: grep -e AliveInterval -e AliveCountMax /etc/ssh/ssh_config | grep -v '#'
-  rescue:
-    - name: Enable Host tag
-      shell: sed -i "s/# Host.*$/Host \*/" /etc/ssh/ssh_config
+  - name: Check if ServerAlive parameters are enable
+    shell: grep -e AliveInterval -e AliveCountMax /etc/ssh/ssh_config | grep -v '#'
 
-    - name: Enable ServerAlive parameters
-      lineinfile:
-        path: /etc/ssh/ssh_config
-        insertafter: '^Host *'
-        line: "{{ item }}"
-      with_items:  
-        - '  ServerAliveInterval=20'
-        - '  ServerAliveCountMax=360'
+  rescue:
+  - name: Enable Host tag
+    shell: sed -i "s/# Host.*$/Host \*/" /etc/ssh/ssh_config
+
+  - name: Enable ServerAlive parameters
+    lineinfile:
+      path: /etc/ssh/ssh_config
+      insertafter: '^Host *'
+      line: "{{ item }}"
+    with_items:  
+      - '  ServerAliveInterval=20'
+      - '  ServerAliveCountMax=360'
+
   become: true
 
 - name: Enabling ClientAliveInterval and ClientAliveCountMax in SSH service as server
   block:
-    - name: Check if ClientAlive parameters are enable
-      shell: grep -e AliveInterval -e AliveCountMax /etc/ssh/sshd_config | grep -v '#'
+  - name: Check if ClientAlive parameters are enable
+    shell: grep -e AliveInterval -e AliveCountMax /etc/ssh/sshd_config | grep -v '#'
+
   rescue:
-    - name: Enable ClientAlive parameters
-      lineinfile:
-        path: /etc/ssh/sshd_config
-        insertafter: '^UsePAM yes'
-        line: "{{ item }}"
-      with_items:
-        - 'ClientAliveInterval=20'
-        - 'ClientAliveCountMax=360'
+  - name: Enable ClientAlive parameters
+    lineinfile:
+      path: /etc/ssh/sshd_config
+      insertafter: '^UsePAM yes'
+      line: "{{ item }}"
+    with_items:
+      - 'ClientAliveInterval=20'
+      - 'ClientAliveCountMax=360'
+
   always:
-    - name: Restart SSH service
-      service:
-        name: sshd
-        state: restarted
+  - name: Restart SSH service
+    service:
+      name: sshd
+      state: restarted
+
   become: true
 
 - name: Disable IPv6 with sysctl

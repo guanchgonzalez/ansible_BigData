@@ -1,0 +1,75 @@
+---
+# User and its environment creation tasks.
+# Target hosts: N/A
+# Vars: username
+#
+
+- name: Erase the previous tech version and tarball file name from the vars main file
+  lineinfile:
+    path: "/home/ansible/roles/{{ username }}/vars/main.yml"
+    regexp: "{{ item }}"
+    state: absent
+  with_items:
+    - "{{ username }}_version"
+    - "{{ username }}_tarball"
+  when: ( group_names | select('match', 'local') | list | length ) > 0
+
+- name: Download the latest technology tarball
+  block:
+  - name: Download the latest Hadoop tarball
+    shell: |
+      file=$(wget -qO- https://archive.apache.org/dist/hadoop/core/current2/ | grep 'hadoop-[0-9\.*]' | grep '.tar.gz"' | grep -iv '\-[a-z]' | sed -e 's/.*href=//' | cut -d'"' -f2)
+      wget -qO /home/ansible/roles/hadoop/files/${file} https://archive.apache.org/dist/hadoop/core/current2/${file}
+      hadoop_version=$(echo ${file} | awk -F'/' '{print $NF}' | sed -e 's/\.tar\.gz//')
+      echo "hadoop_version: ${hadoop_version}
+      hadoop_tarball: ${file}" >> /home/ansible/roles/{{ username }}/vars/main.yml
+    ignore_errors: yes
+    when: {{ username }} == 'hadoop'
+
+  - name: Download the latest Spark tarball
+    shell: |
+      spark_version=$(wget -qO- https://archive.apache.org/dist/spark/ | grep 'folder\.gif' | grep '[0-9]\.[0-9]*/<' | sed -e 's/.*href=//' | cut -d'"' -f2 | sort -V | tail -1)
+      file=$(wget -qO- https://archive.apache.org/dist/spark/${product_version} | grep 'compressed\.gif' | grep -i 'bin-hadoop[1-9\.*]*.tgz"' | sed -e 's/.*href=//' | cut -d'"' -f2 | sort -V | tail -1)
+      wget -qO /home/ansible/roles/spark/files/${file} https://archive.apache.org/dist/spark/${spark_version}${file}
+      echo "spark_version: ${spark_version}
+      spark_tarball: ${file}" >> /home/ansible/roles/{{ username }}/vars/main.yml
+    ignore_errors: yes
+    when: {{ username }} == 'spark'
+
+  - name: Download the latest Kafka tarball
+    shell: |
+      kafka_version=$(wget -qO- https://archive.apache.org/dist/kafka/ | grep 'folder\.gif' | grep '[0-9]\.[0-9]*/<' | grep -iv '\-[a-z]' | sed -e 's/.*href=//' | cut -d'"' -f2 | sort -V | tail -1)
+      file=$(wget -qO- https://archive.apache.org/dist/kafka/${kafka_version} | grep 'compressed\.gif' | sed 's/.*href=//' | cut -d'"' -f2 | grep -iv '\-[a-z]*.tgz' | sort -V | tail -1)
+      wget -qO /home/ansible/roles/kafka/files/${file} https://archive.apache.org/dist/kafka/${kafka_version}${file}
+      echo "kafka_version: ${kafka_version}
+      kafka_tarball: ${file}" >> /home/ansible/roles/{{ username }}/vars/main.yml
+    ignore_errors: yes
+    when: {{ username }} == 'kafka'
+
+  when: ( group_names | select('match', 'local') | list | length ) > 0
+
+- name: Reload vars file
+  include_vars:
+    dir: "/home/ansible/roles/{{ username }}/vars"
+
+- name: Deploy the tarball thru the cluster
+  block:
+  - name: Decompress the tarball
+    unarchive:
+      src: "{{ tarball }}"
+      dest: "/home/{{ username }}"
+      owner: "{{ username }}"
+      group: "{{ username }}"
+      mode: '0755'
+      extra_opts: [--strip-components=1]
+
+  - name: Delete the tarball from the cluster servers
+    file:
+      path: "/home/{{ username }}/{{ tarball }}"
+      state: absent
+
+  become: true
+  become_user: "{{ username }}"
+  when: ( group_names | select('match', 'local') | list | length ) == 0
+
+...

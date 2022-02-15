@@ -3,125 +3,126 @@
 # Target hosts: tdm_master:tdm_worker:local
 #
 
-- name: Check availability of VM's
-  copy:
-    content: "  VM gestionada por los roles/playbooks de Ansible.\n"
-    dest: /etc/motd
-  become: true
-
-- name: Include the YUM update role
-  include_role:
-    name: packages
-  vars:
-    packages:
-      - regex_name: ncdu
-      - regex_name: epel-release
-      - regex_name: python38
-      - regex_name: scala
-  when: ( group_names | select('match', 'local') | list | length ) == 0
-
-- name: Include the Spark user creation role
-  include_role:
-    name: user_creation
-  vars:
-    username: 'spark'
-
-- name: Deploying the Spark master public key around the Spark slaves
-  block:
-    - name: Remove previous Spark slaves entries from the Spark master known_hosts file
-      shell: sed -i "/^{{ item }}.*$/d" /home/spark/.ssh/known_hosts
-      become: true
-      become_user: spark
-      loop: "{{ groups.tdm_worker }}"
-
-    - name: Copy the spark public key to every Spark slave
-      shell: sshpass -p spark ssh-copy-id -i /home/spark/.ssh/id_rsa.pub spark@{{ item }}
-      become: true
-      become_user: spark
-      loop: "{{ groups.tdm_worker }}"
-
-  when: ( group_names | select('match', 'tdm_master') | list | length ) > 0
-
+#- name: Check availability of VM's
+#  copy:
+#    content: "  VM gestionada por los roles/playbooks de Ansible.\n"
+#    dest: /etc/motd
+#  become: true
+#
+#- name: Include the YUM update role
+#  include_role:
+#    name: packages
+#  vars:
+#    packages:
+#      - regex_name: ncdu
+#      - regex_name: epel-release
+#      - regex_name: python38
+#      - regex_name: scala
+#  when: ( group_names | select('match', 'local') | list | length ) == 0
+#
+#- name: Include the Spark user creation role
+#  include_role:
+#    name: user_creation
+#  vars:
+#    username: 'spark'
+#
+#- name: Deploying the Spark master public key around the Spark slaves
+#  block:
+#  - name: Remove previous Spark slaves entries from the Spark master known_hosts file
+#    shell: sed -i "/^{{ item }}.*$/d" /home/spark/.ssh/known_hosts
+#    become: true
+#    become_user: spark
+#    loop: "{{ groups.tdm_worker }}"
+#
+#  - name: Copy the spark public key to every Spark slave
+#    shell: sshpass -p spark ssh-copy-id -i /home/spark/.ssh/id_rsa.pub spark@{{ item }}
+#    become: true
+#    become_user: spark
+#    loop: "{{ groups.tdm_worker }}"
+#
+#  when: ( group_names | select('match', 'tdm_master') | list | length ) > 0
+#
 - name: Install pyspark library
   pip:
     name: pyspark
   when: ( group_names | select('match', 'local') | list | length ) == 0
 
-- name: Download the latest Spark tarball and set its name as a variable into the role vars file
-  shell: |
-    product_version=$(wget -qO- https://archive.apache.org/dist/spark/ | grep 'folder\.gif' | grep '[0-9]\.[0-9]*/<' | sed -e 's/.*href=//' | cut -d'"' -f2 | sort -V | tail -1)
-    file=$(wget -qO- https://archive.apache.org/dist/spark/${product_version} | grep 'compressed\.gif' | grep -i 'bin-hadoop[1-9\.*]*.tgz"' | sed -e 's/.*href=//' | cut -d'"' -f2 | sort -V | tail -1)
-    wget -qO /home/ansible/roles/spark/files/${file} https://archive.apache.org/dist/spark/${product_version}${file}
-    sed -i "s/tarball.*$/tarball: ${file}/" /home/ansible/roles/spark/vars/main.yml
-  ignore_errors: yes
-  when: ( group_names | select('match', 'local') | list | length ) > 0
+#- name: Download the latest Spark tarball and set its name as a variable into the role vars file
+#  shell: |
+#    product_version=$(wget -qO- https://archive.apache.org/dist/spark/ | grep 'folder\.gif' | grep '[0-9]\.[0-9]*/<' | sed -e 's/.*href=//' | cut -d'"' -f2 | sort -V | tail -1)
+#    file=$(wget -qO- https://archive.apache.org/dist/spark/${product_version} | grep 'compressed\.gif' | grep -i 'bin-hadoop[1-9\.*]*.tgz"' | sed -e 's/.*href=//' | cut -d'"' -f2 | sort -V | tail -1)
+#    wget -qO /home/ansible/roles/spark/files/${file} https://archive.apache.org/dist/spark/${product_version}${file}
+#    sed -i "s/tarball.*$/tarball: ${file}/" /home/ansible/roles/spark/vars/main.yml
+#  ignore_errors: yes
+#  when: ( group_names | select('match', 'local') | list | length ) > 0
+#
+#- name: Reload vars file
+#  include_vars:
+#    dir: /home/ansible/roles/spark/vars
+#
+#- name: Deploying Spark thru the cluster
+#  block:
+#  - name: Decompress the tarball
+#    unarchive:
+#      src: "{{ tarball }}"
+#      dest: /home/spark
+#      owner: spark
+#      group: spark
+#      mode: '0755'
+#      extra_opts: [--strip-components=1]
+#
+#  - name: Delete the tarball in the Spark cluster servers
+#    file:
+#      path: "/home/spark/{{ tarball }}"
+#      state: absent
+#
+- name: Deploy the Spark framework thru the cluster
+  - name: Create the local directory
+    file:
+      path: /home/spark/local
+      mode: '0755'
+      state: directory
 
-- name: Reload vars file
-  include_vars:
-    dir: /home/ansible/roles/spark/vars
+  - name: Create the local subdirectories
+    file:
+      path: "/home/spark/local/{{ item }}"
+      mode: '0755'
+      state: directory
+    loop:
+      - 'data'
+      - 'logs'
+      - 'pid'
+      - 'worker'
 
-- name: Deploying Spark thru the cluster
-  block:
-    - name: Decompress the tarball
-      unarchive:
-        src: "{{ tarball }}"
-        dest: /home/spark
-        owner: spark
-        group: spark
-        mode: '0755'
-        extra_opts: [--strip-components=1]
+  - name: Create a copy of the spark-env.sh template
+    copy:
+      src: /home/spark/conf/spark-env.sh.template
+      dest: /home/spark/conf/spark-env.sh
+      remote_src: yes
 
-    - name: Delete the tarball in the Spark cluster servers
-      file:
-        path: "/home/spark/{{ tarball }}"
-        state: absent
-
-    - name: Create the local directory
-      file:
-        path: /home/spark/local
-        mode: '0755'
-        state: directory
-
-    - name: Create the local subdirectories
-      file:
-        path: "/home/spark/local/{{ item }}"
-        mode: '0755'
-        state: directory
-      loop:
-        - 'data'
-        - 'logs'
-        - 'pid'
-        - 'worker'
-
-    - name: Create a copy of the spark-env.sh template
-      copy:
-        src: /home/spark/conf/spark-env.sh.template
-        dest: /home/spark/conf/spark-env.sh
-        remote_src: yes
-
-    - name: Fill the spark-env.sh file
-      blockinfile:
-        path: /home/spark/conf/spark-env.sh
-        mode: '0755'
-        insertafter: EOF
-        marker: "# {mark} ANSIBLE MANAGED BLOCK"
-        block: |
-          export SPARK_LOCAL_HOSTNAME={{ inventory_hostname }}
-          export SPARK_MASTER_HOST={{ groups.tdm_master | first }}
-          export SPARK_WORKER_INSTANCES=1
-          export SPARK_WORKER_CORES={{ 1 if ( ( ansible_processor_cores * ansible_processor_threads_per_core ) < 2 ) else ( ansible_processor_cores * ansible_processor_threads_per_core / 2 ) | int }}
-          export SPARK_WORKER_MEMORY={{ ( ansible_memtotal_mb / 2 ) | int }}m
-          export SPARK_CONF_DIR=${SPARK_HOME}/conf
-          export SPARK_WORKER_DIR=${SPARK_HOME}/local/worker
-          export SPARK_LOCAL_DIRS=${SPARK_HOME}/local/data
-          export SPARK_LOG_DIR=${SPARK_HOME}/local/logs
-          export SPARK_PID_DIR=${SPARK_HOME}/local/pid
-          export PYSPARK_PYTHON=`which python3`
-          export PYSPARK_DRIVER_PYTHON=${PYSPARK_PYTHON}
-          export PYTHONPATH=${SPARK_HOME}/python:${PYTHONPATH}
-          export PYTHONPATH=${SPARK_HOME}/python/lib/py4j-0.10.4-src.zip:${PYTHONPATH}
-          export PYTHONPATH=${SPARK_HOME}/python/lib/pyspark.zip:${PYTHONPATH}
-          export PATH=${SPARK_HOME}/python:${PATH}
+  - name: Fill the spark-env.sh file
+    blockinfile:
+      path: /home/spark/conf/spark-env.sh
+      mode: '0755'
+      insertafter: EOF
+      marker: "# {mark} ANSIBLE MANAGED BLOCK"
+      block: |
+        export SPARK_LOCAL_HOSTNAME={{ inventory_hostname }}
+        export SPARK_MASTER_HOST={{ groups.tdm_master | first }}
+        export SPARK_WORKER_INSTANCES=1
+        export SPARK_WORKER_CORES={{ 1 if ( ( ansible_processor_cores * ansible_processor_threads_per_core ) < 2 ) else ( ansible_processor_cores * ansible_processor_threads_per_core / 2 ) | int }}
+        export SPARK_WORKER_MEMORY={{ ( ansible_memtotal_mb / 2 ) | int }}m
+        export SPARK_CONF_DIR=${SPARK_HOME}/conf
+        export SPARK_WORKER_DIR=${SPARK_HOME}/local/worker
+        export SPARK_LOCAL_DIRS=${SPARK_HOME}/local/data
+        export SPARK_LOG_DIR=${SPARK_HOME}/local/logs
+        export SPARK_PID_DIR=${SPARK_HOME}/local/pid
+        export PYSPARK_PYTHON=`which python3`
+        export PYSPARK_DRIVER_PYTHON=${PYSPARK_PYTHON}
+        export PYTHONPATH=${SPARK_HOME}/python:${PYTHONPATH}
+        export PYTHONPATH=${SPARK_HOME}/python/lib/py4j-0.10.4-src.zip:${PYTHONPATH}
+        export PYTHONPATH=${SPARK_HOME}/python/lib/pyspark.zip:${PYTHONPATH}
+        export PATH=${SPARK_HOME}/python:${PATH}
 
   become: true
   become_user: spark
@@ -129,77 +130,77 @@
 
 - name: Spark master tasks
   block:
-    - name: Create a copy of the spark-defaults.conf template
-      copy:
-        src: /home/spark/conf/spark-defaults.conf.template
-        dest: /home/spark/conf/spark-defaults.conf
-        remote_src: yes
+  - name: Create a copy of the spark-defaults.conf template
+    copy:
+      src: /home/spark/conf/spark-defaults.conf.template
+      dest: /home/spark/conf/spark-defaults.conf
+      remote_src: yes
 
-    - name: Fill the spark-defaults.conf file
-      blockinfile:
-        path: /home/spark/conf/spark-defaults.conf
-        mode: '0755'
-        insertafter: EOF
-        marker: "# {mark} ANSIBLE MANAGED BLOCK"
-        block: |
-          spark.ui.port 8082
-          spark.master spark://0.0.0.0:7077
-          spark.driver.cores {{ 1 if ( ( ansible_processor_cores * ansible_processor_threads_per_core ) < 2 ) else ( ansible_processor_cores * ansible_processor_threads_per_core / 2 ) | int }}
-          spark.driver.memory {{ ( ansible_memtotal_mb / 2 ) | int }}m
-          spark.driver.maxResultSize 0
-          spark.executor.cores {{ 1 if ( ( ansible_processor_cores * ansible_processor_threads_per_core ) < 2 ) else ( ansible_processor_cores * ansible_processor_threads_per_core / 4 ) | int }}
-          spark.executor.memory {{ ( ansible_memtotal_mb / 4 ) | int }}m
-          spark.serializer org.apache.spark.serializer.KryoSerializer
-          spark.rdd.compress true
-          spark.kryoserializer.buffer.max 128m
-          spark.blockManager.port 38000
-          spark.broadcast.port 38001
-          spark.driver.port 38002
-          spark.executor.port 38003
-          spark.fileserver.port 38004
-          spark.replClassServer.port 38005
+  - name: Fill the spark-defaults.conf file
+    blockinfile:
+      path: /home/spark/conf/spark-defaults.conf
+      mode: '0755'
+      insertafter: EOF
+      marker: "# {mark} ANSIBLE MANAGED BLOCK"
+      block: |
+        spark.ui.port 8082
+        spark.master spark://0.0.0.0:7077
+        spark.driver.cores {{ 1 if ( ( ansible_processor_cores * ansible_processor_threads_per_core ) < 2 ) else ( ansible_processor_cores * ansible_processor_threads_per_core / 2 ) | int }}
+        spark.driver.memory {{ ( ansible_memtotal_mb / 2 ) | int }}m
+        spark.driver.maxResultSize 0
+        spark.executor.cores {{ 1 if ( ( ansible_processor_cores * ansible_processor_threads_per_core ) < 2 ) else ( ansible_processor_cores * ansible_processor_threads_per_core / 4 ) | int }}
+        spark.executor.memory {{ ( ansible_memtotal_mb / 4 ) | int }}m
+        spark.serializer org.apache.spark.serializer.KryoSerializer
+        spark.rdd.compress true
+        spark.kryoserializer.buffer.max 128m
+        spark.blockManager.port 38000
+        spark.broadcast.port 38001
+        spark.driver.port 38002
+        spark.executor.port 38003
+        spark.fileserver.port 38004
+        spark.replClassServer.port 38005
 
-    - name: Create a copy of the slaves template
-      copy:
-        src: /home/spark/conf/slaves.template
-        dest: /home/spark/conf/slaves
-        remote_src: yes
+  - name: Create a copy of the slaves template
+    copy:
+      src: /home/spark/conf/slaves.template
+      dest: /home/spark/conf/slaves
+      remote_src: yes
 
-    - name: Remove localhost line from the slaves file
-      lineinfile:
-        path: /home/spark/conf/slaves
-        regexp: '^localhost'
-        state: absent
+  - name: Remove localhost line from the slaves file
+    lineinfile:
+      path: /home/spark/conf/slaves
+      regexp: '^localhost'
+      state: absent
 
-    - name: Fill the slaves file
-      lineinfile:
-        path: /home/spark/conf/slaves
-        line: "{{ item }}"
-        mode: '0644'
-      loop: "{{ groups.tdm_worker }}"
+  - name: Fill the slaves file
+    lineinfile:
+      path: /home/spark/conf/slaves
+      line: "{{ item }}"
+      mode: '0644'
+    loop: "{{ groups.tdm_worker }}"
 
-    - name: Deploy the Python scripts
-      copy:
-        src: "{{ item }}"
-        dest: /home/spark/examples/src/main/python/
-        owner: spark
-        group: spark
-        mode: '0755'
-      with_items:
-        - 'TDM_P2_anexo_1_Pi.py'
-        - 'TDM_P2_anexo_2_WordCount.py'
+  - name: Deploy the Python scripts
+    copy:
+      src: "{{ item }}"
+      dest: /home/spark/examples/src/main/python/
+      owner: spark
+      group: spark
+      mode: '0755'
+    with_items:
+      - 'TDM_P2_anexo_1_Pi.py'
+      - 'TDM_P2_anexo_2_WordCount.py'
 
-    - name: Start the Spark cluster
-      command: /home/spark/sbin/start-all.sh
+  - name: Start the Spark cluster
+    command: /home/spark/sbin/start-all.sh
 
   become: true
   become_user: spark
   when: ( group_names | select('match', 'tdm_master') | list | length ) > 0
 
-- name: Delete the tarball from the Ansible server
-  file:
-    path: "/home/ansible/roles/spark/files/{{ tarball }}"
-    state: absent
-  when: ( group_names | select('match', 'local') | list | length ) > 0
-
+#- name: Delete the tarball from the Ansible server
+#  file:
+#    path: "/home/ansible/roles/spark/files/{{ tarball }}"
+#    state: absent
+#  when: ( group_names | select('match', 'local') | list | length ) > 0
+#
 ...

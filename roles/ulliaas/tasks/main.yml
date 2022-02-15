@@ -1,7 +1,7 @@
 ---
 # Deploy a VM either in management or workers subnet, to be a master or a worker node.
 # The Router, the DHCP-DNS and the Master server VM's must exists prior to launch this playbook.
-# Target host: local
+# Target hosts: local
 #
 
 - name: Login to IaaS
@@ -72,28 +72,29 @@
 
 - name: Stop and remove VM's
   block:
-    - name: Stop VM's
-      ovirt_vm:
-        auth: "{{ ovirt_auth }}"
-        name: "{{ prefix }}{{ item.node_sufix }}"
-        state: stopped
-        timeout: 360
-      with_items: "{{ removing }}"
+  - name: Stop VM's
+    ovirt_vm:
+      auth: "{{ ovirt_auth }}"
+      name: "{{ prefix }}{{ item.node_sufix }}"
+      state: stopped
+      timeout: 360
+    with_items: "{{ removing }}"
   
-    - name: Remove VM's
-      ovirt_vm:
-        auth: "{{ ovirt_auth }}"
-        name: "{{ prefix }}{{ item.node_sufix }}"
-        state: absent
-        timeout: 360
-      with_items: "{{ removing }}"
+  - name: Remove VM's
+    ovirt_vm:
+      auth: "{{ ovirt_auth }}"
+      name: "{{ prefix }}{{ item.node_sufix }}"
+      state: absent
+      timeout: 360
+    with_items: "{{ removing }}"
 
-    - name: Clean known_hosts file
-      lineinfile:
-        path: /home/ansible/.ssh/known_hosts
-        regexp: '{{ prefix }}{{ item.node_sufix }}.*'
-        state: absent
-      with_items: "{{ removing }}"
+  - name: Clean known_hosts file
+    lineinfile:
+      path: /home/ansible/.ssh/known_hosts
+      regexp: '{{ prefix }}{{ item.node_sufix }}.*'
+      state: absent
+    with_items: "{{ removing }}"
+
   ignore_errors: yes
 
 #- name: Debug. Show hostvars.inventory_hostname

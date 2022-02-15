@@ -6,70 +6,68 @@
 
 - name: Generate a new encrypted user password
   block:
-    - name: Erase the previous password
-      lineinfile:
-        path: "/home/ansible/roles/{{ role_name }}/vars/main.yml"
-        regexp: 'username_SHA512_pass'
-        state: absent
+  - name: Erase the previous password
+    lineinfile:
+      path: "/home/ansible/roles/{{ username }}/vars/main.yml"
+      regexp: 'username_SHA512_pass'
+      state: absent
 
-    - name: Encrypt user password with openssl
-      shell: |
-        pass=`echo {{ username }} | openssl passwd -6 -stdin`
-        echo '
-        username_SHA512_pass: ${pass}
-        ...' >> /home/ansible/roles/{{ role_name }}/vars/main.yml
+  - name: Encrypt user password with openssl
+    shell: |
+      pass=`echo {{ username }} | openssl passwd -6 -stdin`
+      echo "username_SHA512_pass: ${pass}" >> /home/ansible/roles/{{ username }}/vars/main.yml
 
   ignore_errors: true
   when: ( group_names | select('match', 'local') | list | length ) > 0
 
 - name: Reloading vars file and creating user
   block:
-    - name: Reload vars file
-      include_vars:
-        dir: "/home/ansible/roles/{{ role_name }}/vars"
+  - name: Reload vars file
+    include_vars:
+      dir: "/home/ansible/roles/{{ username }}/vars"
 
-    - name: Create user group
-      group:
-        name: "{{ username }}"
-        state: present
+  - name: Create user group
+    group:
+      name: "{{ username }}"
+      state: present
 
-    - name: Create user with the same password
-      user:
-        name: "{{ username }}"
-        group: "{{ username }}"
-        password: "{{ username_SHA512_pass }}"
-        generate_ssh_key: yes
+  - name: Create user with the same password
+    user:
+      name: "{{ username }}"
+      group: "{{ username }}"
+      password: "{{ username_SHA512_pass }}"
+      generate_ssh_key: yes
 
   when: ( group_names | select('match', 'local') | list | length ) == 0
 
 - name: Deploy SSH keys relationships on every cluster node
   block:
-    - name: Create user authorized_keys file and grant read permissions to both id_rsa.pub and authorized_keys files
-      file:
-        path: "{{ item }}"
-        state: touch
-        mode: '0644'
-        modification_time: preserve
-        access_time: preserve
-      with_items:
-        - "/home/{{ username }}/.ssh/id_rsa.pub"
-        - "/home/{{ username }}/.ssh/authorized_keys"
-        - "/home/{{ username }}/.ssh/known_hosts"
+  - name: Create user authorized_keys file and grant read permissions to both id_rsa.pub and authorized_keys files
+    file:
+      path: "{{ item }}"
+      state: touch
+      mode: '0644'
+      modification_time: preserve
+      access_time: preserve
+    with_items:
+      - "/home/{{ username }}/.ssh/id_rsa.pub"
+      - "/home/{{ username }}/.ssh/authorized_keys"
+      - "/home/{{ username }}/.ssh/known_hosts"
 
-    - name: Create the .ssh config file
-      copy:
-        dest: "/home/{{ username }}/.ssh/config"
-        content: StrictHostKeyChecking no
-        owner: "{{ username }}"
-        group: "{{ username }}"
-        mode: '0644'
+  - name: Create the .ssh config file
+    copy:
+      dest: "/home/{{ username }}/.ssh/config"
+      content: StrictHostKeyChecking no
+      owner: "{{ username }}"
+      group: "{{ username }}"
+      mode: '0644'
 
-    - name: Include the user public key into its authorized_keys file
-      shell: |
-        encr=$(awk '{print $2}' /home/{{ username }}/.ssh/id_rsa.pub)
-        grep ${encr} /home/{{ username }}/.ssh/authorized_keys
-        [[ $? -ne 0 ]] && cat /home/{{ username }}/.ssh/id_rsa.pub >> /home/{{ username }}/.ssh/authorized_keys
-      ignore_errors: yes
+  - name: Include the user public key into its authorized_keys file
+    shell: |
+      encr=$(awk '{print $2}' /home/{{ username }}/.ssh/id_rsa.pub)
+      grep ${encr} /home/{{ username }}/.ssh/authorized_keys
+      [[ $? -ne 0 ]] && cat /home/{{ username }}/.ssh/id_rsa.pub >> /home/{{ username }}/.ssh/authorized_keys
+    ignore_errors: yes
 
   become: true
   become_user: "{{ username }}"
@@ -95,20 +93,20 @@
 
 - name: Deploy the user profile.d shell script
   block:
-    - name: Deploy the user profile.d shell script template
-      copy:
-        src: generic_profile.sh
-        dest: /etc/profile.d/{{ username }}.sh
-        owner: root
-        group: root
-        mode: '0644'
+  - name: Deploy the user profile.d shell script template
+    copy:
+      src: generic_profile.sh
+      dest: /etc/profile.d/{{ username }}.sh
+      owner: root
+      group: root
+      mode: '0644'
 
-    - name: Substitute the username into the user profile.d shell script
-      shell: |
-        sed -i 's/__var__/{{ username | upper }}/' /etc/profile.d/{{ username }}.sh
-        sed -i 's/__var__/{{ username }}/' /etc/profile.d/{{ username }}.sh
-      args:
-        warn: no
+  - name: Substitute the username into the user profile.d shell script
+    shell: |
+      sed -i 's/__var__/{{ username | upper }}/' /etc/profile.d/{{ username }}.sh
+      sed -i 's/__var__/{{ username }}/' /etc/profile.d/{{ username }}.sh
+    args:
+      warn: no
 
   become: true
   when: ( group_names | select('match', 'local') | list | length ) == 0

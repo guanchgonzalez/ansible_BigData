@@ -77,6 +77,7 @@
 #      state: absent
 #
 - name: Deploy the Spark framework thru the cluster
+  block:
   - name: Create the local directory
     file:
       path: /home/spark/local

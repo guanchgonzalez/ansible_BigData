@@ -137,6 +137,6 @@
 #    path: "/home/ansible/roles/kafka/files/{{ tarball }}"
 #    state: absent
 #  when: ( group_names | select('match', 'local') | list | length ) > 0
-
+#
 ...
 

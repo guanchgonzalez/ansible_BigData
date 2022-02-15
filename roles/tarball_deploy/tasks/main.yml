@@ -72,4 +72,10 @@
   become_user: "{{ username }}"
   when: ( group_names | select('match', 'local') | list | length ) == 0
 
+- name: Delete the tarball from the cluster servers
+  file:
+    path: "/home/ansible/roles/{{ username }}/files/{{ tarball }}"
+    state: absent
+  when: ( group_names | select('match', 'local') | list | length ) > 0
+
 ...

@@ -6,17 +6,25 @@
 
 - name: Fix 6704151 RedHat8/Centos8 issue with repos
   block:
+  - name: Locate all the repo files
+    find:
+      paths: /etc/yum.repos.d/
+      patterns: '*.repo'
+    register: repos
+
   - name: Comment mirrolist line
     replace:
-      path: "/etc/yum.repos.d/*"
+      path: "{{ item.files }}"
       regexp: '^mirrorlist'
       replace: '#mirrorlist'
+    with_items: repos
 
   - name: Uncomment baseurl line
     replace:
-      path: "/etc/yum.repos.d/*"
+      path: "{{ item.files }}"
       regexp: '^#baseurl=http:\/\/mirror'
       replace: 'baseurl=http:\/\/vault'
+    with_items: repos
 
   become: true
 

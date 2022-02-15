@@ -27,7 +27,10 @@
     with_items: "{{ repos.files }}"
 
   - name: Yum clean all
-    command: yum clean all
+    command: dnf clean all
+
+  - name: Yum substitute Centos-Linux by Centos-Stream repos
+    command: dnf -f swap centos-linux-repos centos-stream-repos
 
   become: true
 

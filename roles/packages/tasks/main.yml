@@ -14,17 +14,17 @@
 
   - name: Comment mirrolist line
     replace:
-      path: "{{ item.path }}"
+      path: "{{ item }}"
       regexp: '^mirrorlist'
       replace: '#mirrorlist'
-    with_items: "{{ repos.files }}"
+    with_items: "{{ repos.files.path }}"
 
   - name: Uncomment baseurl line
     replace:
-      path: "{{ item.path }}"
+      path: "{{ item }}"
       regexp: '^#baseurl=http:\/\/mirror'
-      replace: 'baseurl=http:\/\/vault'
-    with_items: "{{ repos.files }}"
+      replace: 'baseurl=http://vault'
+    with_items: "{{ repos.files.path }}"
 
   - name: Yum clean all
     command: yum clean all

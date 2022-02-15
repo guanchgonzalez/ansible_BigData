@@ -22,7 +22,7 @@
   - name: Uncomment baseurl line
     replace:
       path: "{{ item.path }}"
-      regexp: '^#baseurl=http:\/\/mirror'
+      regexp: '^#baseurl=http:\/\/mirrorlist'
       replace: 'baseurl=http://vault'
     with_items: "{{ repos.files }}"
 

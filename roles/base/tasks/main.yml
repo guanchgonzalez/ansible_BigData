@@ -20,9 +20,7 @@
       - regex_name: java-devel
       - regex_name: ksh
       - regex_name: mlocate
-      - regex_name: nmap
       - regex_name: rsync
-      - regex_name: sshpass
       - regex_name: tar
       - regex_name: traceroute
       - regex_name: tree

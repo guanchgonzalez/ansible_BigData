@@ -325,20 +325,20 @@
       mode: '0700'
     when: ( group_names | select('match', 'namenode') | list | length ) > 0
 
-- name: Remove previous datanodes entries from the namenode known_hosts file
-  shell: sed -i "/^{{ item }}.*$/d" /home/hadoop/.ssh/known_hosts
-  become: true
-  become_user: hadoop
-  loop: "{{ groups.datanode }}"
-  when: ( group_names | select('match', 'namenode') | list | length ) > 0
-
-- name: Copy the hadoop public key to every datanode
-  shell: sshpass -p hadoop ssh-copy-id -i /home/hadoop/.ssh/id_rsa.pub hadoop@{{ item }}
-  become: true
-  become_user: hadoop
-  loop: "{{ groups.datanode }}"
-  when: ( group_names | select('match', 'namenode') | list | length ) > 0
-
+#- name: Remove previous datanodes entries from the namenode known_hosts file
+#  shell: sed -i "/^{{ item }}.*$/d" /home/hadoop/.ssh/known_hosts
+#  become: true
+#  become_user: hadoop
+#  loop: "{{ groups.datanode }}"
+#  when: ( group_names | select('match', 'namenode') | list | length ) > 0
+#
+#- name: Copy the hadoop public key to every datanode
+#  shell: sshpass -p hadoop ssh-copy-id -i /home/hadoop/.ssh/id_rsa.pub hadoop@{{ item }}
+#  become: true
+#  become_user: hadoop
+#  loop: "{{ groups.datanode }}"
+#  when: ( group_names | select('match', 'namenode') | list | length ) > 0
+#
 - name: Formating HDFS filesystems, starting Hadoop cluster daemons and deploying MapReduce files in the Namenode
   block:
   - name: Format Namenode HDFS

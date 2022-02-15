@@ -1,0 +1,26 @@
+[ansible@tfm-alu0101371061-master ~]$ git status
+En la rama master
+Cambios no rastreados para el commit:
+  (usa "git add <archivo>..." para actualizar lo que será confirmado)
+  (usa "git restore <archivo>..." para descartar los cambios en el directorio de trabajo)
+	modificado:     group_vars/local/vars.yml
+	modificado:     hosts
+	modificado:     roles/common/tasks/main.yml
+	modificado:     roles/hadoop/tasks/main.yml
+	modificado:     roles/kafka/tasks/main.yml
+	modificado:     roles/kafka/vars/main.yml
+	modificado:     roles/spark/tasks/main.yml
+	modificado:     roles/spark/vars/main.yml
+	modificado:     roles/ulliaas/tasks/main.yml
+	modificado:     roles/user_creation/tasks/main.yml
+	modificado:     roles/user_creation/vars/main.yml
+	modificado:     site.yml
+
+Archivos sin seguimiento:
+  (usa "git add <archivo>..." para incluirlo a lo que se será confirmado)
+	tdm_master_ansibleFacts
+
+sin cambios agregados al commit (usa "git add" y/o "git commit -a")
+[ansible@tfm-alu0101371061-master ~]$ git branch
+* master
+[ansible@tfm-alu0101371061-master ~]$

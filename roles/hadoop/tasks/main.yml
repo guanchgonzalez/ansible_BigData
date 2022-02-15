@@ -3,97 +3,101 @@
 # Target hosts: namenode, datanode
 #
 
-- name: Creating Hadoop user
-  block:
-    - name: Create hadoop group
-      group:
-        name: hadoop
-        state: present
+- name: Include common role
+  include_role:
+    name: common_role
 
-    - name: Create hadoop user
-      user:
-        name: hadoop
-        group: hadoop
-        password: $6$wyJynfbpYdgnE/OR$Ww24YJ.niKgC5fc37yrAwD5NpuE43tszAkqlOeLeoeeuyI184TLtkGxTjFWCjR1BuW29AdtFwzyln4PwwkQuG0
-        generate_ssh_key: yes
-
-    - name: Deploy Hadoop bash profile files
-      copy:
-        src: "{{ item }}"
-        dest: /home/hadoop
-        owner: hadoop
-        group: hadoop
-        mode: '0700'
-      with_items:
-        - .bashrc
-        - .bash_profile
-
-  when: ( group_names | select('match', 'local') | list | length ) == 0
-
-- name: Deploying SSH keys relationships on every Hadoop node
-  block:
-    - name: Create hadoop user authorized_keys file and grant read permissions both id_rsa.pub and authorized_keys files
-      file:
-        path: "{{ item }}"
-        state: touch
-        mode: '0644'
-        modification_time: preserve
-        access_time: preserve
-      with_items:
-        - /home/hadoop/.ssh/id_rsa.pub
-        - /home/hadoop/.ssh/authorized_keys
-        - /home/hadoop/.ssh/known_hosts
-
-    - name: Create the .ssh config file
-      copy:
-        dest: /home/hadoop/.ssh/config
-        content: StrictHostKeyChecking no
-        owner: hadoop
-        group: hadoop
-        mode: '0644'
-
-    - name: Include the hadoop user public key into its authorized_keys file
-      shell: |
-        encr=$(awk '{print $2}' /home/hadoop/.ssh/id_rsa.pub)
-        grep ${encr} /home/hadoop/.ssh/authorized_keys
-        [[ $? -ne 0 ]] && cat /home/hadoop/.ssh/id_rsa.pub >> /home/hadoop/.ssh/authorized_keys
-      ignore_errors: yes
-
-    - name: Purge previous Hadoop deployment
-      shell: rm -rf /home/hadoop/h* 2>/dev/null
-
-  become: true
-  become_user: hadoop
-  when: ( group_names | select('match', 'local') | list | length ) == 0
-
-- name: Enable SSH login to remote hadoop users
-  shell: |
-    grep AllowUsers /etc/ssh/sshd_config | grep hadoop
-    if [ $? -ne 0 ]
-    then
-      line=$(grep AllowUsers /etc/ssh/sshd_config 2>/dev/null)
-      line=${line}' hadoop'
-      sed -i "s/AllowUsers.*$/${line}/" /etc/ssh/sshd_config
-    fi
-  become: true
-  when: ( group_names | select('match', 'local') | list | length ) == 0
-
-- name: Previous sys tasks
-  block:
-    - name: Restart SSH service
-      service:
-        name: sshd
-        state: restarted
-
-    - name: Install latest Java (with devel), rsync and sshpass
-      yum:
-        name:
-         - java-1.8.0-openjdk*
-         - rsync
-        state: latest
-
-  when: ( group_names | select('match', 'local') | list | length ) == 0
-
+#- name: Creating Hadoop user
+#  block:
+#    - name: Create hadoop group
+#      group:
+#        name: hadoop
+#        state: present
+#
+#    - name: Create hadoop user
+#      user:
+#        name: hadoop
+#        group: hadoop
+#        password: $6$wyJynfbpYdgnE/OR$Ww24YJ.niKgC5fc37yrAwD5NpuE43tszAkqlOeLeoeeuyI184TLtkGxTjFWCjR1BuW29AdtFwzyln4PwwkQuG0
+#        generate_ssh_key: yes
+#
+#    - name: Deploy Hadoop bash profile files
+#      copy:
+#        src: "{{ item }}"
+#        dest: /home/hadoop
+#        owner: hadoop
+#        group: hadoop
+#        mode: '0700'
+#      with_items:
+#        - .bashrc
+#        - .bash_profile
+#
+#  when: ( group_names | select('match', 'local') | list | length ) == 0
+#
+#- name: Deploying SSH keys relationships on every Hadoop node
+#  block:
+#    - name: Create hadoop user authorized_keys file and grant read permissions both id_rsa.pub and authorized_keys files
+#      file:
+#        path: "{{ item }}"
+#        state: touch
+#        mode: '0644'
+#        modification_time: preserve
+#        access_time: preserve
+#      with_items:
+#        - /home/hadoop/.ssh/id_rsa.pub
+#        - /home/hadoop/.ssh/authorized_keys
+#        - /home/hadoop/.ssh/known_hosts
+#
+#    - name: Create the .ssh config file
+#      copy:
+#        dest: /home/hadoop/.ssh/config
+#        content: StrictHostKeyChecking no
+#        owner: hadoop
+#        group: hadoop
+#        mode: '0644'
+#
+#    - name: Include the hadoop user public key into its authorized_keys file
+#      shell: |
+#        encr=$(awk '{print $2}' /home/hadoop/.ssh/id_rsa.pub)
+#        grep ${encr} /home/hadoop/.ssh/authorized_keys
+#        [[ $? -ne 0 ]] && cat /home/hadoop/.ssh/id_rsa.pub >> /home/hadoop/.ssh/authorized_keys
+#      ignore_errors: yes
+#
+#    - name: Purge previous Hadoop deployment
+#      shell: rm -rf /home/hadoop/h* 2>/dev/null
+#
+#  become: true
+#  become_user: hadoop
+#  when: ( group_names | select('match', 'local') | list | length ) == 0
+#
+#- name: Enable SSH login to remote hadoop users
+#  shell: |
+#    grep AllowUsers /etc/ssh/sshd_config | grep hadoop
+#    if [ $? -ne 0 ]
+#    then
+#      line=$(grep AllowUsers /etc/ssh/sshd_config 2>/dev/null)
+#      line=${line}' hadoop'
+#      sed -i "s/AllowUsers.*$/${line}/" /etc/ssh/sshd_config
+#    fi
+#  become: true
+#  when: ( group_names | select('match', 'local') | list | length ) == 0
+#
+#- name: Previous sys tasks
+#  block:
+#    - name: Restart SSH service
+#      service:
+#        name: sshd
+#        state: restarted
+#
+#    - name: Install latest Java (with devel), rsync and sshpass
+#      yum:
+#        name:
+#         - java-1.8.0-openjdk*
+#         - rsync
+#        state: latest
+#
+#  when: ( group_names | select('match', 'local') | list | length ) == 0
+#
 - name: Download the latest Hadoop tarball and update the hadoop_version variable value in the vars file
   block:
   - name: Download the latest Hadoop tarball into the Ansible master

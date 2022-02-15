@@ -4,12 +4,21 @@
 # Vars: username
 #
 
-- name: Encrypt user password with openssl
-  shell: |
-    pass=`echo {{ username }} | openssl passwd -6 -stdin`
-    echo "---
-    username_SHA512_pass: ${pass}
-    ..." > /home/ansible/roles/user_creation/vars/main.yml
+- name: Generate a new encrypted user password
+  block:
+    - name: Erase the previous password
+      lineinfile:
+        path: "/home/ansible/roles/{{ role_name }}/vars/main.yml"
+        regexp: 'username_SHA512_pass'
+        state: absent
+
+    - name: Encrypt user password with openssl
+      shell: |
+        pass=`echo {{ username }} | openssl passwd -6 -stdin`
+        echo '
+        username_SHA512_pass: ${pass}
+        ...' >> /home/ansible/roles/{{ role_name }}/vars/main.yml
+
   ignore_errors: true
   when: ( group_names | select('match', 'local') | list | length ) > 0
 
@@ -17,7 +26,7 @@
   block:
     - name: Reload vars file
       include_vars:
-        dir: /home/ansible/roles/user_creation/vars
+        dir: "/home/ansible/roles/{{ role_name }}/vars"
 
     - name: Create user group
       group:
@@ -35,7 +44,7 @@
 
 - name: Deploy SSH keys relationships on every cluster node
   block:
-    - name: Create user authorized_keys file and grant read permissions both id_rsa.pub and authorized_keys files
+    - name: Create user authorized_keys file and grant read permissions to both id_rsa.pub and authorized_keys files
       file:
         path: "{{ item }}"
         state: touch

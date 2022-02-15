@@ -4,20 +4,27 @@
 localhost ansible_connection=local ansible_python_interpreter=/usr/bin/python3.6
 
 [master]
-id-g6-rgl-master.management.local ansible_connection=local ansible_python_interpreter=/usr/bin/python3.6
+#id-g6-rgl-master.management.local ansible_connection=local ansible_python_interpreter=/usr/bin/python3.6
+tfm-alu0101371061-master.management.local ansible_connection=local ansible_python_interpreter=/usr/bin/python3.6
 
 [worker]
-id-tdm-rgl-wn0[1:7].workers.local
+#id-tdm-rgl-wn0[1:7].workers.local
+tfm-alu0101371061-wn0[1:9].workers.local
+tfm-alu0101371061-wn10.workers.local
 
 [namenode]
-id-tdm-rgl-wn04.workers.local
+#id-tdm-rgl-wn04.workers.local
+tfm-alu0101371061-wn03.workers.local
 
 [datanode]
-id-tdm-rgl-wn0[1:3].workers.local
+#id-tdm-rgl-wn0[1:3].workers.local
+tfm-alu0101371061-wn04.workers.local
 
 [tdm_master]
-id-tdm-rgl-wn05.workers.local
+#id-tdm-rgl-wn05.workers.local
+tfm-alu0101371061-wn03.workers.local
 
 [tdm_worker]
-id-tdm-rgl-wn0[6:7].workers.local
+#id-tdm-rgl-wn0[6:7].workers.local
+tfm-alu0101371061-wn04.workers.local
 

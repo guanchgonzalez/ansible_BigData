@@ -7,27 +7,42 @@ ovirt_password: "{{ vault_ovirt_password }}"
 
 # VM names
 
-prefix: id-tdm-rgl-
+#prefix: id-tdm-rgl-
+#prefix: tdm-rgl-
+prefix: tfm-alu0101371061-
 subnet: workers
 
 nodes:
+#  - node_sufix: wn01
 #  - node_sufix: wn02
-#  - node_sufix: wn03
-#  - node_sufix: wn04
-  - node_sufix: wn05
-  - node_sufix: wn06
-  - node_sufix: wn07
+  - node_sufix: wn03
+  - node_sufix: wn04
+#  - node_sufix: wn05
+#  - node_sufix: wn06
+#  - node_sufix: wn07
+#  - node_sufix: wn08
+#  - node_sufix: wn09
+#  - node_sufix: wn10
 
 # VM's to be removed
 
 removing:
+#  - node_sufix: wn01
 #  - node_sufix: wn02
 #  - node_sufix: wn03
 #  - node_sufix: wn04
 #  - node_sufix: wn05
 #  - node_sufix: wn06
 #  - node_sufix: wn07
+#  - node_sufix: wn08
+#  - node_sufix: wn09
+#  - node_sufix: wn10
 
+# VM HW resources assignment
+
+hw:
+  - cores: 24
+  - mem: 48
 
 # VM networks
 
@@ -43,4 +58,6 @@ node_nics:
 # /home/ansible/.ssh/id_rsa.pub
 
 ansible_ssh_keys: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDEdaWjrjYbyki8YAHWIroW3G3kDWaGI6YnzD3fXKP3z1OSOSai6+pSyZZYj125U9AxE6qyKFCmETPZ4GxU2ipNXDgX1ENY22PNiDjxkdjGunFeGsZEO5eb0wSEQ1IsqLqZe93VssS5UV2kFIyS7Tr1Y7LfN7216RzvyBSLSt4983IqEe1+kZ9eKJvtb/qITQrWVJX0078DA79x5PJXvJmXW9JNRvwJ+IhJRMNmxEi8TLG5ZbQApyzHzrz1EtHgmsZMa/4Bqs0uixUWEM7KwluDlKYqFAGHtBtNKi6tGF5flD9CyByJbiBtmKQ/k7z4PFgTMFyCGOblwBinqANZcWb/sF+LNH0D1mtPtFtP8w02w83CKIqQlixnFJvze6aDFgE1WDZJwaqnWOZWlh8nJzcI6qBThW1VUraLNvakVSfujgpDILLjj4kdynbP2PxUlQv8RWTjzJE+25jn13kJ1geK7e9M0KGYy+sfGkfDqk9syMo8xI1f47P/dsf4+PHKwds= ansible@id-g6-rgl-master.management.local
+
+...
 

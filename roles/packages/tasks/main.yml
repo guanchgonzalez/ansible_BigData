@@ -43,7 +43,7 @@
   yum:
     name: "{{ item.regex_name }}"
     state: latest
-  with_items: "{{ packages_list }}"
+  with_items: "{{ packs }}"
 
 - name: Yum autoremove
   yum:

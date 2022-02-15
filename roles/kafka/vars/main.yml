@@ -1,6 +1,11 @@
 ---
 
-# Tarball file
+# Common_role variables
+
+username: kafka
+
+packages:
+  - regex_name:
 
 kafka_tarball: kafka_2.13-2.7.0.tgz
 

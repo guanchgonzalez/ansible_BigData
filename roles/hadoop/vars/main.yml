@@ -1,6 +1,10 @@
 ---
+# Common_role variables
 
-# Tarball file
+username: hadoop
+
+packages:
+  - java-1.8.0-openjdk*
 
 hadoop_version: hadoop-2.10.1
 

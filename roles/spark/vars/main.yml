@@ -1,6 +1,14 @@
 ---
 
-# Tarball file
+# Common_role variables
+
+username: spark
+
+packages:
+  - regex_name: ncdu
+  - regex_name: epel-release
+  - regex_name: python38
+  - regex_name: scala
 
 spark_tarball: spark-3.0.1-bin-hadoop3.2.tgz
 

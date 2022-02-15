@@ -15,7 +15,7 @@
   include_role:
     name: packages
   vars:
-    packages_list: "{{ packages }}"
+    packs: "{{ packages }}"
 
 - name: Include the technology own user creation role
   include_role:

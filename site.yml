@@ -31,10 +31,10 @@
 #      when: ( group_names | select('match', 'local') | list | length ) == 0
 #      ignore_errors: true
 #
-#- hosts: tdm_master:local
-#  gather_facts: false
-#  roles:
-#    - role: kafka
+- hosts: tdm_master:local
+  gather_facts: false
+  roles:
+    - role: kafka
 #  tasks:
 #    - name: Remove Kafka user environment
 #      shell: |

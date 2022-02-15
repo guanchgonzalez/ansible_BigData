@@ -13,12 +13,11 @@
   include_role:
     name: packages
   vars:
-    packages:
+    packs:
       - regex_name: bind*
       - regex_name: binutils
       - regex_name: java
       - regex_name: java-devel
-      - regex_name: java-1.8.0-openjdk
       - regex_name: ksh
       - regex_name: mlocate
       - regex_name: nmap

@@ -4,6 +4,22 @@
 # Vars: every RPM needed by the parent role
 #
 
+- name: Fix 6704151 RedHat8/Centos8 issue with repos
+  block:
+  - name: Comment mirrolist line
+    replace:
+      path: "/etc/yum.repos.d/*"
+      regexp: '^mirrorlist'
+      replace: '#mirrorlist'
+
+  - name: Uncomment baseurl line
+    replace:
+      path: "/etc/yum.repos.d/*"
+      regexp: '^#baseurl=http:\/\/mirror'
+      replace: 'baseurl=http:\/\/vault'
+
+  become: true
+
 - name: Update all OS packages
   yum:
     name: '*'

@@ -9,8 +9,9 @@ tfm-alu0101371061-master.management.local ansible_connection=local ansible_pytho
 
 [worker]
 #id-tdm-rgl-wn0[1:7].workers.local
-tfm-alu0101371061-wn0[1:9].workers.local
-tfm-alu0101371061-wn10.workers.local
+#tfm-alu0101371061-wn0[1:9].workers.local
+#tfm-alu0101371061-wn10.workers.local
+tfm-alu0101371061-wn0[3:4].workers.local
 
 [namenode]
 #id-tdm-rgl-wn04.workers.local

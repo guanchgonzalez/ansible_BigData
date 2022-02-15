@@ -1,7 +1,7 @@
 ---
 
-# Tarball file name
+# Tarball file
 
-tarball: spark-3.0.1-bin-hadoop3.2.tgz
+spark_tarball: spark-3.0.1-bin-hadoop3.2.tgz
 
 ...

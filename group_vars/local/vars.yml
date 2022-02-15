@@ -40,9 +40,8 @@ removing:
 
 # VM HW resources assignment
 
-hw:
-  - cores: 24
-  - mem: 48
+cores: 24
+mem: 48
 
 # VM networks
 

@@ -21,13 +21,13 @@
   include_role:
     name: user_creation
   vars:
-    username: "{{ username }}"
+    usern: "{{ username }}"
 
 - name: Include the technology latest tarball deployment role
   include_role:
     name: tarball_deploy
   vars:
-    tarball: "{{ username }}"
+    usern: "{{ username }}"
 
 ...
 

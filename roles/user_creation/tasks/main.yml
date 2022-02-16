@@ -1,21 +1,21 @@
 ---
 # User and its environment creation tasks.
 # Target hosts: N/A
-# Vars: username
+# Vars: usern
 #
 
 - name: Generate a new encrypted user password
   block:
   - name: Erase the previous password
     lineinfile:
-      path: "/home/ansible/roles/{{ username }}/vars/main.yml"
+      path: "/home/ansible/roles/{{ user }}/vars/main.yml"
       regexp: 'username_SHA512_pass'
       state: absent
 
   - name: Encrypt user password with openssl
     shell: |
-      pass=`echo {{ username }} | openssl passwd -6 -stdin`
-      echo "username_SHA512_pass: ${pass}" >> /home/ansible/roles/{{ username }}/vars/main.yml
+      pass=`echo {{ usern }} | openssl passwd -6 -stdin`
+      echo "username_SHA512_pass: ${pass}" >> /home/ansible/roles/{{ usern }}/vars/main.yml
 
   ignore_errors: true
   when: ( group_names | select('match', 'local') | list | length ) > 0
@@ -24,17 +24,17 @@
   block:
   - name: Reload vars file
     include_vars:
-      dir: "/home/ansible/roles/{{ username }}/vars"
+      dir: "/home/ansible/roles/{{ usern }}/vars"
 
   - name: Create user group
     group:
-      name: "{{ username }}"
+      name: "{{ usern }}"
       state: present
 
   - name: Create user with the same password
     user:
-      name: "{{ username }}"
-      group: "{{ username }}"
+      name: "{{ usern }}"
+      group: "{{ usern }}"
       password: "{{ username_SHA512_pass }}"
       generate_ssh_key: yes
 
@@ -50,36 +50,36 @@
       modification_time: preserve
       access_time: preserve
     with_items:
-      - "/home/{{ username }}/.ssh/id_rsa.pub"
-      - "/home/{{ username }}/.ssh/authorized_keys"
-      - "/home/{{ username }}/.ssh/known_hosts"
+      - "/home/{{ usern }}/.ssh/id_rsa.pub"
+      - "/home/{{ usern }}/.ssh/authorized_keys"
+      - "/home/{{ usern }}/.ssh/known_hosts"
 
   - name: Create the .ssh config file
     copy:
-      dest: "/home/{{ username }}/.ssh/config"
+      dest: "/home/{{ usern }}/.ssh/config"
       content: StrictHostKeyChecking no
-      owner: "{{ username }}"
-      group: "{{ username }}"
+      owner: "{{ usern }}"
+      group: "{{ usern }}"
       mode: '0644'
 
   - name: Include the user public key into its authorized_keys file
     shell: |
-      encr=$(awk '{print $2}' /home/{{ username }}/.ssh/id_rsa.pub)
-      grep ${encr} /home/{{ username }}/.ssh/authorized_keys
-      [[ $? -ne 0 ]] && cat /home/{{ username }}/.ssh/id_rsa.pub >> /home/{{ username }}/.ssh/authorized_keys
+      encr=$(awk '{print $2}' /home/{{ usern }}/.ssh/id_rsa.pub)
+      grep ${encr} /home/{{ usern }}/.ssh/authorized_keys
+      [[ $? -ne 0 ]] && cat /home/{{ usern }}/.ssh/id_rsa.pub >> /home/{{ usern }}/.ssh/authorized_keys
     ignore_errors: yes
 
   become: true
-  become_user: "{{ username }}"
+  become_user: "{{ usern }}"
   when: ( group_names | select('match', 'local') | list | length ) == 0
 
 - name: Enable SSH login to remote users
   shell: |
-    grep AllowUsers /etc/ssh/sshd_config | grep "{{ username }}"
+    grep AllowUsers /etc/ssh/sshd_config | grep "{{ usern }}"
     if [ $? -ne 0 ]
     then
       line=$(grep AllowUsers /etc/ssh/sshd_config 2>/dev/null)
-      line=${line}" "{{ username }}
+      line=${line}" "{{ usern }}
       sed -i "s/AllowUsers.*$/${line}/" /etc/ssh/sshd_config
     fi
   become: true
@@ -96,15 +96,15 @@
   - name: Deploy the user profile.d shell script template
     copy:
       src: generic_profile.sh
-      dest: /etc/profile.d/{{ username }}.sh
+      dest: /etc/profile.d/{{ usern }}.sh
       owner: root
       group: root
       mode: '0644'
 
   - name: Substitute the username into the user profile.d shell script
     shell: |
-      sed -i 's/__var__/{{ username | upper }}/' /etc/profile.d/{{ username }}.sh
-      sed -i 's/__var__/{{ username }}/' /etc/profile.d/{{ username }}.sh
+      sed -i 's/__var__/{{ usern | upper }}/' /etc/profile.d/{{ usern }}.sh
+      sed -i 's/__var__/{{ usern }}/' /etc/profile.d/{{ usern }}.sh
     args:
       warn: no
 

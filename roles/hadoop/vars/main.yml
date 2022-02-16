@@ -6,7 +6,7 @@ username: hadoop
 username_SHA512_pass: hadoop
 
 packages:
-  - regex_name: java-1.8.0-openjdk*
+  - regex_name: java-1.8.0-openjdk-devel
 
 hadoop_version: hadoop-2.10.1
 

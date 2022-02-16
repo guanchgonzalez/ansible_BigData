@@ -8,13 +8,13 @@
   block:
   - name: Encrypt user password with openssl
     command: echo {{ usern }} | openssl passwd -6 -stdin
-    register: pass
+    register: uspass
 
   - name: Save the new encrypted password as a variable
     replace:
       path: "/home/ansible/roles/{{ usern }}/vars/main.yml"
       regexp: '^username_SHA512_pass: (.*)$'
-      replace: "username_SHA512_pass: {{ pass }}"
+      replace: "username_SHA512_pass: {{ uspass }}"
 
   when: ( group_names | select('match', 'local') | list | length ) > 0
 

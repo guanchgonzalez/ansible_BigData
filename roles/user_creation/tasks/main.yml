@@ -10,20 +10,20 @@
     command: echo {{ usern }} | openssl passwd -6 -stdin
     register: pass
 
-  - name: Erase the previous password
+  - name: Save the new encrypted password as a variable
     replace:
       path: "/home/ansible/roles/{{ usern }}/vars/main.yml"
-      regexp: 'username_SHA512_pass'
+      regexp: '^username_SHA512_pass: (.*)$'
       replace: "username_SHA512_pass: {{ pass }}"
 
   when: ( group_names | select('match', 'local') | list | length ) > 0
 
-- name: Reloading vars file and creating user
-  block:
-  - name: Reload vars file
-    include_vars:
-      dir: "/home/ansible/roles/{{ usern }}/vars"
+- name: Reload vars file
+  include_vars:
+    dir: "/home/ansible/roles/{{ usern }}/vars"
 
+- name: Create the group and the user with password
+  block:
   - name: Create user group
     group:
       name: "{{ usern }}"

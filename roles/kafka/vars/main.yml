@@ -1,5 +1,4 @@
 ---
-
 # Common_role variables
 
 username: kafka
@@ -9,6 +8,8 @@ username_SHA512_pass: kafka
 packages:
   - regex_name: nmap
 
-kafka_tarball: kafka_2.13-2.7.0.tgz
+version: kafka
+
+tarball: kafka
 
 ...

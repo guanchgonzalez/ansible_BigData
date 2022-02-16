@@ -149,22 +149,18 @@
     state: stopped
     enabled: no
 
-- name: Disable SElinux
-  selinux:
-    state: disabled
-  register: reboot_required
+- name: Disable SElinux and reboot workers
+  block:
+  - name: Disable SElinux
+    selinux:
+      state: disabled
+    register: reboot_required
 
-#- name: Debug. Show hostvars.inventory_hostname
-#  debug:
-#    var: hostvars[inventory_hostname]
-#
-#- name: Debug. Show magic variables
-#  debug:
-#    var: vars
-#
-- name: Reboot the VM
-  reboot:
-  when: reboot_required.reboot_required
-  ignore_errors: yes
+  - name: Reboot the VM
+    reboot:
+    when: reboot_required.reboot_required
+
+  when: ( group_names | select('match', 'local') | list | length ) == 0
+#  ignore_errors: yes
 
 ...

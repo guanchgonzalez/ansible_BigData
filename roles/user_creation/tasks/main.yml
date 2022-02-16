@@ -6,18 +6,16 @@
 
 - name: Generate a new encrypted user password
   block:
+  - name: Encrypt user password with openssl
+    command: echo {{ usern }} | openssl passwd -6 -stdin
+    register: pass
+
   - name: Erase the previous password
-    lineinfile:
+    replace:
       path: "/home/ansible/roles/{{ usern }}/vars/main.yml"
       regexp: 'username_SHA512_pass'
-      state: absent
+      replace: "username_SHA512_pass: {{ pass }}"
 
-  - name: Encrypt user password with openssl
-    shell: |
-      pass=`echo {{ usern }} | openssl passwd -6 -stdin`
-      echo "username_SHA512_pass: ${pass}" >> /home/ansible/roles/{{ usern }}/vars/main.yml
-
-  ignore_errors: true
   when: ( group_names | select('match', 'local') | list | length ) > 0
 
 - name: Reloading vars file and creating user

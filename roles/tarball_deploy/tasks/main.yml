@@ -24,7 +24,7 @@
       echo "hadoop_version: ${hadoop_version}
       hadoop_tarball: ${file}" >> /home/ansible/roles/{{ usern }}/vars/main.yml
     ignore_errors: yes
-    when: {{ (usern == 'hadoop') }}
+    when: "{{ (usern == 'hadoop') }}"
 
   - name: Download the latest Spark tarball
     shell: |
@@ -34,7 +34,7 @@
       echo "spark_version: ${spark_version}
       spark_tarball: ${file}" >> /home/ansible/roles/{{ usern }}/vars/main.yml
     ignore_errors: yes
-    when: {{ (usern == 'spark') }}
+    when: "{{ (usern == 'spark') }}"
 
   - name: Download the latest Kafka tarball
     shell: |
@@ -44,7 +44,7 @@
       echo "kafka_version: ${kafka_version}
       kafka_tarball: ${file}" >> /home/ansible/roles/{{ usern }}/vars/main.yml
     ignore_errors: yes
-    when: {{ (usern == 'kafka') }}
+    when: "{{ (usern == 'kafka') }}"
 
   when: ( group_names | select('match', 'local') | list | length ) > 0
 

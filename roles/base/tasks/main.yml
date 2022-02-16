@@ -161,6 +161,11 @@
     when: reboot_required.reboot_required
 
   when: ( group_names | select('match', 'local') | list | length ) == 0
-#  ignore_errors: yes
+
+- name: Check availability of VM's
+  copy:
+    content: "  VM gestionada por los roles/playbooks de Ansible.\n"
+    dest: /etc/motd
+  become: true
 
 ...

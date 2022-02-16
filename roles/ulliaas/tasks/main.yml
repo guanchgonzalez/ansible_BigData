@@ -121,4 +121,10 @@
     ovirt_auth: "{{ ovirt_auth }}"
     state: absent
 
+- name: Check availability of VM's
+  copy:
+    content: "  VM gestionada por los roles/playbooks de Ansible.\n"
+    dest: /etc/motd
+  become: true
+
 ...

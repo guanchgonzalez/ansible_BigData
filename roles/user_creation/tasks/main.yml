@@ -8,7 +8,7 @@
   block:
   - name: Erase the previous password
     lineinfile:
-      path: "/home/ansible/roles/{{ user }}/vars/main.yml"
+      path: "/home/ansible/roles/{{ usern }}/vars/main.yml"
       regexp: 'username_SHA512_pass'
       state: absent
 

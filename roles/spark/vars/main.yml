@@ -8,7 +8,6 @@ username_SHA512_pass: spark
 
 packages:
   - regex_name: ncdu
-  - regex_name: epel-release
   - regex_name: python38
   - regex_name: scala
 

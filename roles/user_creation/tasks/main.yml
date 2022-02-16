@@ -7,7 +7,7 @@
 - name: Generate a new encrypted user password
   block:
   - name: Encrypt user password with openssl
-    command: echo {{ usern }} | openssl passwd -6 -stdin
+    shell: echo {{ usern }} | openssl passwd -6 -stdin
     register: uspass
 
   - name: Save the new encrypted password as a variable

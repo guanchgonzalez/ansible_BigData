@@ -8,10 +8,10 @@
   block:
   - name: Download the latest Hadoop tarball
     shell: |
-      file=$(wget -qO- https://archive.apache.org/dist/hadoop/core/current2/ | grep 'hadoop-[0-9\.*]' | grep '.tar.gz"' | grep -iv '\-[a-z]' | sed -e 's/.*href=//' | cut -d'"' -f2)
+      file=$(wget -qO- https://archive.apache.org/dist/hadoop/core/current2/ | grep 'hadoop-[0-9\.*]' | grep '.tar.gz"' | grep -iv '\-[a-z]' | sed -e 's/.*href=//' | cut -d'"' -f2 | tr -d '/')
       wget -qO /home/ansible/roles/hadoop/files/${file} https://archive.apache.org/dist/hadoop/core/current2/${file}
       hadoop_version=$(echo ${file} | awk -F'/' '{print $NF}' | sed -e 's/\.tar\.gz//')
-      echo '{"version": "${hadoop_version}", "tarball": "${file}"}'
+      echo \''{"version": "'${hadoop_version}'", "tarball": "'${file}'"}'\'
     register: var_tarball
     ignore_errors: yes
     when: "{{ (usern == 'hadoop') }}"
@@ -19,19 +19,19 @@
   - name: Download the latest Spark tarball
     shell: |
       spark_version=$(wget -qO- https://archive.apache.org/dist/spark/ | grep 'folder\.gif' | grep '[0-9]\.[0-9]*/<' | sed -e 's/.*href=//' | cut -d'"' -f2 | sort -V | tail -1)
-      file=$(wget -qO- https://archive.apache.org/dist/spark/${product_version} | grep 'compressed\.gif' | grep -i 'bin-hadoop[1-9\.*]*.tgz"' | sed -e 's/.*href=//' | cut -d'"' -f2 | sort -V | tail -1)
+      file=$(wget -qO- https://archive.apache.org/dist/spark/${product_version} | grep 'compressed\.gif' | grep -i 'bin-hadoop[1-9\.*]*.tgz"' | sed -e 's/.*href=//' | cut -d'"' -f2 | tr -d '/' | sort -V | tail -1)
       wget -qO /home/ansible/roles/spark/files/${file} https://archive.apache.org/dist/spark/${spark_version}${file}
-      echo '{"version": ${spark_version}", "tarball": "${file}"}'
+      echo \''{"version": "'${spark_version}'", "tarball": "'${file}'"}'\'
     register: var_tarball
     ignore_errors: yes
     when: "{{ (usern == 'spark') }}"
 
   - name: Download the latest Kafka tarball
     shell: |
-      kafka_version=$(wget -qO- https://archive.apache.org/dist/kafka/ | grep 'folder\.gif' | grep '[0-9]\.[0-9]*/<' | grep -iv '\-[a-z]' | sed -e 's/.*href=//' | cut -d'"' -f2 | sort -V | tail -1)
+      kafka_version=$(wget -qO- https://archive.apache.org/dist/kafka/ | grep 'folder\.gif' | grep '[0-9]\.[0-9]*/<' | grep -iv '\-[a-z]' | sed -e 's/.*href=//' | cut -d'"' -f2 | tr -d '/' | sort -V | tail -1)
       file=$(wget -qO- https://archive.apache.org/dist/kafka/${kafka_version} | grep 'compressed\.gif' | sed 's/.*href=//' | cut -d'"' -f2 | grep -iv '\-[a-z]*.tgz' | sort -V | tail -1)
       wget -qO /home/ansible/roles/kafka/files/${file} https://archive.apache.org/dist/kafka/${kafka_version}${file}
-      echo '{"version": "${kafka_version}", "tarball": "${file}"}'
+      echo \''{"version": "'${kafka_version}'", "tarball": "'${file}'"}'\'
     ignore_errors: yes
     register: var_tarball
     when: "{{ (usern == 'kafka') }}"

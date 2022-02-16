@@ -56,7 +56,7 @@
   block:
   - name: Decompress the tarball
     unarchive:
-      src: "{{ tarball }}"
+      src: "{{ usern }}_tarball"
       dest: "/home/{{ usern }}"
       owner: "{{ usern }}"
       group: "{{ usern }}"
@@ -65,7 +65,7 @@
 
   - name: Delete the tarball from the cluster servers
     file:
-      path: "/home/{{ usern }}/{{ tarball }}"
+      path: "/home/{{ usern }}/{{ usern }}_tarball"
       state: absent
 
   become: true
@@ -74,7 +74,7 @@
 
 - name: Delete the tarball from the cluster servers
   file:
-    path: "/home/ansible/roles/{{ usern }}/files/{{ tarball }}"
+    path: "/home/ansible/roles/{{ usern }}/files/{{ usern }}_tarball"
     state: absent
   when: ( group_names | select('match', 'local') | list | length ) > 0
 

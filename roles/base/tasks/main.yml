@@ -46,10 +46,12 @@
     name: packages
   vars:
     packs:
-      - regex_name: bind*
+      - regex_name: bind
+      - regex_name: bind-utils
+      - regex_name: bind-lib*
+      - regex_name: bind-pkcs11*
+      - regex_name: bind-devel*
       - regex_name: binutils
-      - regex_name: java
-      - regex_name: java-devel
       - regex_name: ksh
       - regex_name: mlocate
       - regex_name: rsync

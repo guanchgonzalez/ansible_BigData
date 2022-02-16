@@ -4,6 +4,8 @@
 
 username: spark
 
+username_SHA512_pass: spark
+
 packages:
   - regex_name: ncdu
   - regex_name: epel-release

@@ -3,6 +3,8 @@
 
 username: hadoop
 
+username_SHA512_pass: hadoop
+
 packages:
   - java-1.8.0-openjdk*
 

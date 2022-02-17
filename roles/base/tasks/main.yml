@@ -3,77 +3,6 @@
 # Target hosts: worker
 #
 
-- name: Fix 6704151 RedHat8/Centos8 issue with repos
-  block:
-  - name: Locate all the repo files
-    find:
-      paths: /etc/yum.repos.d/
-      patterns: '*.repo'
-    register: repos
-
-  - name: Comment mirrolist line
-    replace:
-      path: "{{ item.path }}"
-      regexp: '^mirrorlist'
-      replace: '#mirrorlist'
-    with_items: "{{ repos.files }}"
-
-  - name: Uncomment baseurl line
-    replace:
-      path: "{{ item.path }}"
-      regexp: '^#baseurl=http:\/\/mirro(r|rlist)'
-      replace: 'baseurl=http://vault'
-    with_items: "{{ repos.files }}"
-
-  - name: Yum clean all
-    command: dnf clean all
-    ignore_errors: yes
-
-  - name: Yum substitute Centos-Linux by Centos-Stream repos
-    command: dnf -y swap centos-linux-repos centos-stream-repos
-    ignore_errors: yes
-
-  become: true
-
-- name: Include the YUM update role
-  include_role:
-    name: packages
-  vars:
-    packs:
-      - regex_name: bind
-      - regex_name: bind-utils
-      - regex_name: bind-lib*
-      - regex_name: binutils
-      - regex_name: epel-release
-      - regex_name: ksh
-      - regex_name: mlocate
-      - regex_name: rsync
-      - regex_name: tar
-      - regex_name: traceroute
-      - regex_name: tree
-      - regex_name: vim
-      - regex_name: wget
-
-- name: Deploying the Java profile.d shell script
-  block:
-  - name: Create an empty Java profile.d file
-    file:
-      path: /etc/profile.d/java.sh
-      owner: root
-      group: root
-      mode: '0644'
-      state: touch
- 
-  - name: Fill the Java profile.d file
-    copy:
-      dest: /etc/profile.d/java.sh
-      content: |
-        export JAVA_HOME=/etc/alternatives/jre
-        export PATH=${JAVA_HOME}/bin:${PATH}
- 
-  become: true
-  when: ( group_names | select('match', 'local') | list | length ) == 0
-
 - name: Generate ansible user SSH keys
   user:
     name: ansible
@@ -138,6 +67,83 @@
     state: stopped
     enabled: no
 
+- name: Check availability of VM's
+  copy:
+    content: "  VM gestionada por los roles/playbooks de Ansible.\n"
+    dest: /etc/motd
+  become: true
+
+- name: Fix 6704151 RedHat8/Centos8 issue with repos
+  block:
+  - name: Locate all the repo files
+    find:
+      paths: /etc/yum.repos.d/
+      patterns: '*.repo'
+    register: repos
+
+  - name: Comment mirrolist line
+    replace:
+      path: "{{ item.path }}"
+      regexp: '^mirrorlist'
+      replace: '#mirrorlist'
+    with_items: "{{ repos.files }}"
+
+  - name: Uncomment baseurl line
+    replace:
+      path: "{{ item.path }}"
+      regexp: '^#baseurl=http:\/\/mirro(r|rlist)'
+      replace: 'baseurl=http://vault'
+    with_items: "{{ repos.files }}"
+
+  - name: Yum clean all
+    command: dnf clean all
+    ignore_errors: yes
+
+  - name: Yum substitute Centos-Linux by Centos-Stream repos
+    command: dnf -y swap centos-linux-repos centos-stream-repos
+    ignore_errors: yes
+
+  become: true
+
+- name: Include the YUM update role
+  include_role:
+    name: packages
+  vars:
+    packs:
+      - regex_name: bind
+      - regex_name: bind-utils
+      - regex_name: bind-lib*
+      - regex_name: binutils
+      - regex_name: epel-release
+      - regex_name: ksh
+      - regex_name: mlocate
+      - regex_name: rsync
+      - regex_name: tar
+      - regex_name: traceroute
+      - regex_name: tree
+      - regex_name: vim
+      - regex_name: wget
+
+- name: Deploying the Java profile.d shell script
+  block:
+  - name: Create an empty Java profile.d file
+    file:
+      path: /etc/profile.d/java.sh
+      owner: root
+      group: root
+      mode: '0644'
+      state: touch
+
+  - name: Fill the Java profile.d file
+    copy:
+      dest: /etc/profile.d/java.sh
+      content: |
+        export JAVA_HOME=/etc/alternatives/jre
+        export PATH=${JAVA_HOME}/bin:${PATH}
+
+  become: true
+  when: ( group_names | select('match', 'local') | list | length ) == 0
+
 - name: Disable SElinux and reboot workers
   block:
   - name: Disable SElinux
@@ -150,11 +156,5 @@
     when: reboot_required.reboot_required
 
   when: ( group_names | select('match', 'local') | list | length ) == 0
-
-- name: Check availability of VM's
-  copy:
-    content: "  VM gestionada por los roles/playbooks de Ansible.\n"
-    dest: /etc/motd
-  become: true
 
 ...

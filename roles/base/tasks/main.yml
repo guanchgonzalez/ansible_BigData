@@ -3,44 +3,38 @@
 # Target hosts: worker
 #
 
-- name: Check availability of VM's
-  copy:
-    content: "  VM gestionada por los roles/playbooks de Ansible.\n"
-    dest: /etc/motd
+- name: Fix 6704151 RedHat8/Centos8 issue with repos
+  block:
+  - name: Locate all the repo files
+    find:
+      paths: /etc/yum.repos.d/
+      patterns: '*.repo'
+    register: repos
+
+  - name: Comment mirrolist line
+    replace:
+      path: "{{ item.path }}"
+      regexp: '^mirrorlist'
+      replace: '#mirrorlist'
+    with_items: "{{ repos.files }}"
+
+  - name: Uncomment baseurl line
+    replace:
+      path: "{{ item.path }}"
+      regexp: '^#baseurl=http:\/\/mirro(r|rlist)'
+      replace: 'baseurl=http://vault'
+    with_items: "{{ repos.files }}"
+
+  - name: Yum clean all
+    command: dnf clean all
+    ignore_errors: yes
+
+  - name: Yum substitute Centos-Linux by Centos-Stream repos
+    command: dnf -y swap centos-linux-repos centos-stream-repos
+    ignore_errors: yes
+
   become: true
 
-#- name: Fix 6704151 RedHat8/Centos8 issue with repos
-#  block:
-#  - name: Locate all the repo files
-#    find:
-#      paths: /etc/yum.repos.d/
-#      patterns: '*.repo'
-#    register: repos
-#
-#  - name: Comment mirrolist line
-#    replace:
-#      path: "{{ item.path }}"
-#      regexp: '^mirrorlist'
-#      replace: '#mirrorlist'
-#    with_items: "{{ repos.files }}"
-#
-#  - name: Uncomment baseurl line
-#    replace:
-#      path: "{{ item.path }}"
-#      regexp: '^#baseurl=http:\/\/mirrorlist'
-#      replace: 'baseurl=http://vault'
-#    with_items: "{{ repos.files }}"
-#
-#  - name: Yum clean all
-#    command: dnf clean all
-#    ignore_errors: yes
-#
-#  - name: Yum substitute Centos-Linux by Centos-Stream repos
-#    command: dnf -y swap centos-linux-repos centos-stream-repos
-#    ignore_errors: yes
-#
-#  become: true
-#
 - name: Include the YUM update role
   include_role:
     name: packages

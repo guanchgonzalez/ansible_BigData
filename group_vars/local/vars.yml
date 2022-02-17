@@ -1,5 +1,4 @@
 ---
-
 # ULL IaaS oVirt login
 
 ovirt_login: alu0101371061@ULL
@@ -40,8 +39,8 @@ removing:
 
 # VM HW resources assignment
 
-cores: 24
-mem: 48
+cores: 16
+mem: 16
 
 # VM networks
 
@@ -56,7 +55,6 @@ node_nics:
 # SSH public key from Ansible Master server to ansible user
 # /home/ansible/.ssh/id_rsa.pub
 
-ansible_ssh_keys: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDEdaWjrjYbyki8YAHWIroW3G3kDWaGI6YnzD3fXKP3z1OSOSai6+pSyZZYj125U9AxE6qyKFCmETPZ4GxU2ipNXDgX1ENY22PNiDjxkdjGunFeGsZEO5eb0wSEQ1IsqLqZe93VssS5UV2kFIyS7Tr1Y7LfN7216RzvyBSLSt4983IqEe1+kZ9eKJvtb/qITQrWVJX0078DA79x5PJXvJmXW9JNRvwJ+IhJRMNmxEi8TLG5ZbQApyzHzrz1EtHgmsZMa/4Bqs0uixUWEM7KwluDlKYqFAGHtBtNKi6tGF5flD9CyByJbiBtmKQ/k7z4PFgTMFyCGOblwBinqANZcWb/sF+LNH0D1mtPtFtP8w02w83CKIqQlixnFJvze6aDFgE1WDZJwaqnWOZWlh8nJzcI6qBThW1VUraLNvakVSfujgpDILLjj4kdynbP2PxUlQv8RWTjzJE+25jn13kJ1geK7e9M0KGYy+sfGkfDqk9syMo8xI1f47P/dsf4+PHKwds= ansible@id-g6-rgl-master.management.local
+ansible_ssh_keys: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCrBIkWeF2sTTRL4JBJu7UpABZtTXF4GPeEegPmkaDFj0maNMwHI9JbA49mKztathp8H9yDJr+0rHUvh07Q6ZcT9jrRtNow43TPHmEq4FTw3JychpfVXmffX6lDe78I3q7y7t+PVin3G0fg3GCfvaRF14hka+r1BTYnPnggtwrshf1682kIcELpekSJMAmW7dWcJiIjr8dhwv80PCcgBH/81sy6R46vzf/DSfzt/N/yx0Lq+7VSIUm12vgaN28BB0TsJtIoD+EVGdcK2A1xltZJ1rN81xeM41WSUNT5Azhmy4b7uqyK5TW/QvvL7aI0lsUfhQ4cEvAVEOMXsXaMi5jTNdKstndOkSna7RdtbKg2Nm1/lQ2zp1XVP9b3wYFc8+0OQdTHgBtr+vsL5nfcWly6gPDfOoX+Fmh+JDw/6DacbsaQiWcZaZAi1RUjAMTrORIaW+zfvtS1dn9A9U04L9imu+r8bHuSnXMqDdZ71rTD+y2T22zXH/zBJ7Gz1z4YJdU= ansible@tfm-alu0101371061-master
 
 ...
-

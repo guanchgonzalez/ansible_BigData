@@ -1,0 +1,48 @@
+# The format of this file is documented in the dhcpd.leases(5) manual page.
+# This lease file was written by isc-dhcp-4.3.6
+
+# authoring-byte-order entry is generated, DO NOT DELETE
+authoring-byte-order little-endian;
+
+lease 192.168.212.32 {
+  starts 6 2022/02/19 14:42:10;
+  ends 0 2022/02/20 14:42:10;
+  tstp 0 2022/02/20 14:42:10;
+  cltt 6 2022/02/19 14:42:10;
+  binding state active;
+  next binding state free;
+  rewind binding state free;
+  hardware ethernet 00:1a:4a:97:7d:b1;
+  uid "\001\000\032J\227}\261";
+  set ddns-fwd-name = "tfm-alu0101371061-wn01.workers.local";
+  set ddns-txt = "311034ce7a4624cd5f8788ab2c0889e1d9";
+  set ddns-rev-name = "32.212.168.192.in-addr.arpa.";
+  client-hostname "tfm-alu0101371061-wn01";
+}
+lease 192.168.212.33 {
+  starts 6 2022/02/19 14:43:19;
+  ends 0 2022/02/20 14:43:19;
+  tstp 0 2022/02/20 14:43:19;
+  cltt 6 2022/02/19 14:43:19;
+  binding state active;
+  next binding state free;
+  rewind binding state free;
+  hardware ethernet 00:1a:4a:97:7d:b2;
+  uid "\001\000\032J\227}\262";
+  set ddns-fwd-name = "tfm-alu0101371061-wn02.workers.local";
+  set ddns-txt = "316f9591a1060e30bacc46831abc87fada";
+  set ddns-rev-name = "33.212.168.192.in-addr.arpa.";
+  client-hostname "tfm-alu0101371061-wn02";
+}
+lease 192.168.212.35 {
+  starts 0 2022/02/20 11:28:38;
+  ends 1 2022/02/21 11:28:38;
+  cltt 0 2022/02/20 11:28:38;
+  binding state active;
+  next binding state free;
+  rewind binding state free;
+  hardware ethernet 00:1a:4a:97:7d:b4;
+  uid "\001\000\032J\227}\264";
+  client-hostname "tfm-alu0101371061-wn02";
+}
+

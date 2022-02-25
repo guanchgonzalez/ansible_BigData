@@ -31,8 +31,8 @@
       insertafter: '^Host *'
       line: "{{ item }}"
     with_items:  
-      - '  ServerAliveInterval=20'
-      - '  ServerAliveCountMax=360'
+      - '  ServerAliveInterval 20'
+      - '  ServerAliveCountMax 360'
 
   become: true
 
@@ -44,8 +44,8 @@
       insertafter: '^UsePAM yes'
       line: "{{ item }}"
     with_items:
-      - 'ClientAliveInterval=20'
-      - 'ClientAliveCountMax=360'
+      - 'ClientAliveInterval 20'
+      - 'ClientAliveCountMax 360'
 
   - name: Restart SSH service
     service:
@@ -123,6 +123,7 @@
       - regex_name: tree
       - regex_name: vim
       - regex_name: wget
+  ignore_errors: yes
 
 - name: Deploying the Java profile.d shell script
   block:
@@ -142,7 +143,6 @@
         export PATH=${JAVA_HOME}/bin:${PATH}
 
   become: true
-  when: ( group_names | select('match', 'local') | list | length ) == 0
 
 - name: Disable SElinux and reboot workers
   block:
@@ -154,7 +154,5 @@
   - name: Reboot the VM
     reboot:
     when: reboot_required.reboot_required
-
-  when: ( group_names | select('match', 'local') | list | length ) == 0
 
 ...

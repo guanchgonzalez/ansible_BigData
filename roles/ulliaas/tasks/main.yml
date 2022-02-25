@@ -12,6 +12,7 @@
     password: "{{ ovirt_password }}"
     headers:
       filter: true
+  when: group_names | select('match', 'local') | list | length > 0
 
 - name: Create a VM
   ovirt_vm:
@@ -26,7 +27,7 @@
     state: present
     wait: yes
   with_items: "{{ nodes }}"
-  ignore_errors: yes
+  when: ( removing is none ) and ( ( group_names | select('match', 'local') | list | length ) > 0 )
 
 - name: Update VM via cloud-init
   ovirt_vm:
@@ -49,7 +50,7 @@
       custom_script: |
         write_files:
           - path: /etc/sudoers.d/ansible
-            permissions: '0644'
+            permissions: '0440'
             content: |
               ansible ALL=(ALL) NOPASSWD:ALL
           - path: /tmp/saludos.txt
@@ -60,15 +61,54 @@
           - sed -i '/AllowUsers/c\AllowUsers usuario soporteiass adminstic ansible' /etc/ssh/sshd_config
           - echo 'DHCP_HOSTNAME='"{{ prefix }}{{ item.node_sufix }}" >> /etc/sysconfig/network-scripts/ifcfg-ens3
           - echo '192.168.211.0/24 via 192.168.212.1 dev ens4' > /etc/sysconfig/network-scripts/route-ens4
-          - sed -i '/plugins/c\#plugins=ifcfg-rh' /etc/NetworkManager/NetworkManager.conf
-          - printf '\n\n[global-dns-domain-*]\nservers=192.168.211.5, 10.4.9.29, 10.4.9.30' >> /etc/NetworkManager/NetworkManager.conf
+          - sed -i '/^plugins/c\#plugins=ifcfg-rh' /etc/NetworkManager/NetworkManager.conf
+          - printf '\n\n[global-dns-domain-*]\nservers=192.168.211.5, 10.4.9.29, 10.4.9.30\n' >> /etc/NetworkManager/NetworkManager.conf
           - systemctl restart NetworkManager.service
           - systemctl restart sshd.service
           - ifdown ens3
           - ifup ens3
     wait: yes
   with_items: "{{ nodes }}"
-  ignore_errors: yes
+  when: ( removing is none ) and ( ( group_names | select('match', 'local') | list | length ) > 0 )
+
+- name: Get the VM network facts
+  setup:
+    gather_subset: network
+  when: ( nodes is none ) and ( ( group_names | select('match', 'worker') | list | length ) > 0 )
+
+- name: Get the VM IP from workers network
+  block:
+  - name: Register the VM IP
+    debug:
+      var: hostvars['{{ prefix }}{{ item.node_sufix }}.{{ subnet }}.local']['ansible_ens4']['ipv4']['address']
+    with_items: "{{ removing }}"
+    register: vm_ip
+
+  - name: Save the VM IP into the role variables file
+    lineinfile:
+      path: /home/ansible/roles/ulliaas/vars/main.yml
+      line: "{{ item.value | ansible.netcommon.ipv4 }}"
+      insertafter: '^vm_ips:'
+    with_dict: "{{ vm_ip['results'] }}"
+
+  - name: Remove false value from variables file
+    lineinfile:
+      path: /home/ansible/roles/ulliaas/vars/main.yml
+      regexp: '^False'
+      state: absent
+
+  - name: Convert IP lines into list items
+    replace:
+      path: /home/ansible/roles/ulliaas/vars/main.yml
+      regexp: '^192(.+)$'
+      replace: '  - 192\1'
+
+  when: ( nodes is none ) and ( ( group_names | select('match', 'local') | list | length ) > 0 )
+
+- name: Reload vars file
+  include_vars:
+    dir: "/home/ansible/roles/ulliaas/vars"
+  when: ( nodes is none ) and ( ( group_names | select('match', 'local') | list | length ) > 0 )
 
 - name: Stop and remove VM's
   block:
@@ -95,7 +135,60 @@
       state: absent
     with_items: "{{ removing }}"
 
-  ignore_errors: yes
+  when: ( nodes is none ) and ( ( group_names | select('match', 'local') | list | length ) > 0 )
+
+- name: Release the VM IP's from the DHCP-DNS server
+  block:
+  - name: Clean the IP entry in the DHCP
+    replace:
+      path: /var/lib/dhcpd/dhcpd.leases
+      regexp: '(lease {{ item }} {[\s\S]*)}'
+      replace: ''
+    with_items: "{{ vm_ips }}"
+
+  - name: Remove the worker IP from workers.local.db
+    replace:
+      path: /var/named/workers.local.db
+      regexp: '(.*){{ item }}\n[^\n]+'
+      replace: ''
+    with_items: "{{ vm_ips }}"
+
+  - name: Remove empty lines from workers.local.db
+    lineinfile:
+      path: /var/named/workers.local.db
+      regexp: '^$'
+      state: absent
+
+  - name: Remove the worker hostname from workers.local.rev
+    lineinfile:
+      path: /var/named/workers.local.rev
+      regexp: '(.*){{ item.node_sufix }}\.workers\.local\.'
+      state: absent
+    with_items: "{{ removing }}"
+
+  - name: Remove DNS jnl files
+    file:
+      path: /var/named/workers.local.*.jnl
+      state: absent
+
+  - name: Restart DHCP and DNS services
+    service:
+      name: "{{ item }}"
+      state: restarted
+    with_list:
+      - named
+      - dhcpd
+
+  become: true
+  when: ( nodes is none ) and ( ( group_names | select('match', 'dhcp') | list | length ) > 0 )
+
+- name: Remove erased VM IPs from role variables file
+  replace:
+    path: /home/ansible/roles/ulliaas/vars/main.yml
+    after: 'vm_ips:'
+    regexp: '(^\s*$)'
+    replace: ''
+  when: ( nodes is none ) and ( ( group_names | select('match', 'local') | list | length ) > 0 )
 
 #- name: Debug. Show hostvars.inventory_hostname
 #  debug:
@@ -120,5 +213,7 @@
   ovirt_auth:
     ovirt_auth: "{{ ovirt_auth }}"
     state: absent
+  become: true
+  when: group_names | select('match', 'local') | list | length > 0
 
 ...

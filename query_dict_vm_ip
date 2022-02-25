@@ -1,0 +1,5 @@
+vm_ip:
+{'key': 'changed', 'value': False}
+{'key': 'msg', 'value': 'All items completed'}
+{'key': 'results', 'value': [{"hostvars['tfm-alu0101371061-wn01.workers.local']['ansible_ens4']['ipv4']['address']": '192.168.212.32', 'failed': False, 'changed': False, 'item': {'node_sufix': 'wn01'}, 'ansible_loop_var': 'item'}, {"hostvars['tfm-alu0101371061-wn02.workers.local']['ansible_ens4']['ipv4']['address']": '192.168.212.33', 'failed': False, 'changed': False, 'item': {'node_sufix': 'wn02'}, 'ansible_loop_var': 'item'}]}
+# End of vm_ip list

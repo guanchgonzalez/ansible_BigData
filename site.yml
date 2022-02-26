@@ -7,11 +7,11 @@
   roles:
     - role: ulliaas
 
-#- hosts: worker
-#  gather_facts: false
-#  roles:
-#    - role: base
-#
+- hosts: worker
+  gather_facts: false
+  roles:
+    - role: base
+
 #- hosts: namenode:datanode:local
 #  gather_facts: true
 #  roles:

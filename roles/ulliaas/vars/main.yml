@@ -12,8 +12,8 @@ prefix: tfm-alu0101371061-
 subnet: workers
 
 nodes:
-#  - node_sufix: wn01
-#  - node_sufix: wn02
+  - node_sufix: wn01
+  - node_sufix: wn02
 #  - node_sufix: wn03
 #  - node_sufix: wn04
 #  - node_sufix: wn05
@@ -26,8 +26,8 @@ nodes:
 # VM's to be removed
 
 removing:
-  - node_sufix: wn01
-  - node_sufix: wn02
+#  - node_sufix: wn01
+#  -  node_sufix: wn02
 #  - node_sufix: wn03
 #  - node_sufix: wn04
 #  - node_sufix: wn05
@@ -38,8 +38,6 @@ removing:
 #  - node_sufix: wn10
 
 vm_ips:
-  - 192.168.212.33
-  - 192.168.212.32
 # End of vm_ip list
 
 # VM HW resources assignment

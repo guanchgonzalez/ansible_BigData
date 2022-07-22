@@ -4,49 +4,61 @@
 # Target hosts: local, workers, dhcp
 
 - name: Login into ULL IaaS
-  delegate_to: local
+  when: "'local' in group_names"
   include_tasks: login.yml
 
-- name: Create the VM's
-  when: removing is none
-  delegate_to: local
-  include_tasks: create_vm.yml
-  include_vars: nodes.yml
+- name: Include nodes vars
+  when: "'local' in group_names"
+  include_vars: "{{ item }}"
+  with_items:
+    - nodes.yml
+    - removing.yml
 
-- name: Save the VM IP's and remove the VM's
-  when: nodes is none
-  include_vars:
+- name: Create the VM's
+  when: "removing is none and 'local' in group_names"
+  include_tasks: create_vm.yml
+
+- name: Include removing and vm_ips vars
+  when: "nodes is none and 'dhcp' not in group_names"
+  include_vars: "{{ item }}"
+  with_items:
     - removing.yml
     - vm_ips.yml
 
-  block:
-  - name: Get the VM network facts
-    delegate_to: workers
-    setup:
-      gather_subset: network
+- name: Get the VM IP's from worker nodes
+  when: "nodes is none and 'worker' in group_names"
+  setup:
+    gather_subset: network
+  register: netvalues
 
-  - name: Get the VM IP from workers network
-    delegate_to: local
-    include_tasks: get_vm_ip.yml
+- name: Show variable
+  when: "nodes is none and 'dhcp' not in group_names"
+  debug:
+    var: netvalues
 
-  - name: Stop and remove VM's from ULL IaaS
-    include_tasks: remove_vm.yml
-    delegate_to: local
+- name: Set the VM IP's into the vars file
+  when: "nodes is none and 'local' in group_names"
+  include_tasks: set_vm_ip.yml
+  vars: 
+    vm_ip: "{{ netvars }}"
+
+- name: Stop and remove VM's from ULL IaaS
+  when: "nodes is none and 'local' in group_names"
+  include_tasks: remove_vm.yml
+
+- name: Include removing and vm_ips vars
+  when: "nodes is none and 'worker' not in group_names"
+  include_vars: "{{ item }}"
+  with_items:
+    - removing.yml
+    - vm_ips.yml
 
 - name: Release the VM IP's from the DHCP-DNS server
-  when: nodes is none
-  delegate_to: dhcp
-  become: true
+  when: "nodes is none and 'dhcp' in group_names"
   include_tasks: release_dhcp_dns.yml
-  include_vars:
-    - removing.yml
-    - vm_ips.yml
-
-  notify: restart_services
 
 - name: Remove erased VM IPs from variables file
-  when: nodes is none
-  delegate_to: local
+  when: "nodes is none and 'local' in group_names"
   replace:
     path: /home/ansible/roles/ulliaas/vars/vm_ips.yml
     after: 'vm_ips:'
@@ -54,7 +66,7 @@
     replace: ''
 
 - name: Logout from ULL IaaS
-  delegate_to: local
+  when: "'local' in group_names"
   include_tasks: logout.yml
 
 ...

@@ -1,17 +1,16 @@
 ---
-# Main playbook to deploy all the Ansible-Hadoop and TDM infraestructure.
-#
+# Main playbook to deploy all the Ansible TFM infraestructure.
 
-- hosts: local:dhcp:worker
+- hosts: local:workers:dhcp
   gather_facts: false
   roles:
     - role: ulliaas
 
-- hosts: worker
-  gather_facts: false
-  roles:
-    - role: base
-
+#- hosts: worker
+#  gather_facts: false
+#  roles:
+#    - role: base
+#
 #- hosts: namenode:datanode:local
 #  gather_facts: true
 #  roles:

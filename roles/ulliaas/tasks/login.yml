@@ -1,0 +1,13 @@
+---
+# Target hosts: local
+
+- name: Login to IaaS
+  ovirt_auth:
+    url: https://iaas.ull.es/ovirt-engine/api
+    insecure: yes
+    username: "{{ ovirt_login }}"
+    password: "{{ ovirt_password }}"
+    headers:
+      filter: true
+
+...

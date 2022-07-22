@@ -1,0 +1,60 @@
+---
+# Deploy a VM either in management or workers subnet, to be a master or a worker node.
+# Target hosts: local
+
+- name: Create a VM
+  ovirt_vm:
+    auth: "{{ ovirt_auth }}"
+    cluster: Cluster-Rojo
+    name: "{{ prefix }}{{ item.node_sufix }}"
+    cpu_cores: "{{ cores }}"
+    cpu_sockets: 1
+    memory: "{{ mem }}GiB"
+    template: centos-8-cloudinit
+    nics: "{{ node_nics }}"
+    state: present
+    wait: yes
+  with_items: "{{ nodes }}"
+
+- name: Update VM via cloud-init
+  ovirt_vm:
+    auth: "{{ ovirt_auth }}"
+    name: "{{ prefix }}{{ item.node_sufix }}"
+    state: running
+    timeout: 360
+    cloud_init_nics:
+      - nic_name: ens3
+        nic_boot_protocol: dhcp
+        nic_on_boot: True
+      - nic_name: ens4
+        nic_boot_protocol: dhcp
+        nic_on_boot: True
+    cloud_init:
+      host_name: "{{ prefix }}{{ item.node_sufix }}.{{ subnet }}.local"
+      user_name: ansible
+      root_password: $6$3diC789eX$WZPkCdIrIm11cbZyhx/uwsydqgqEb1hsBvOXIF31ngjqxYhGyXMdaHZrwsf8vZHqEBoqPoXhWANPR/itAEU7l.
+      authorized_ssh_keys: "{{ ansible_ssh_keys }}"
+      custom_script: |
+        write_files:
+          - path: /etc/sudoers.d/ansible
+            permissions: '0440'
+            content: |
+              ansible ALL=(ALL) NOPASSWD:ALL
+          - path: /tmp/saludos.txt
+            permissions: '0644'
+            content: |
+              "Que pasa pisha"
+        runcmd:
+          - sed -i '/AllowUsers/c\AllowUsers usuario soporteiass adminstic ansible' /etc/ssh/sshd_config
+          - echo 'DHCP_HOSTNAME='"{{ prefix }}{{ item.node_sufix }}" >> /etc/sysconfig/network-scripts/ifcfg-ens3
+          - echo '192.168.211.0/24 via 192.168.212.1 dev ens4' > /etc/sysconfig/network-scripts/route-ens4
+          - sed -i '/^plugins/c\#plugins=ifcfg-rh' /etc/NetworkManager/NetworkManager.conf
+          - printf '\n\n[global-dns-domain-*]\nservers=192.168.211.5, 10.4.9.29, 10.4.9.30\n' >> /etc/NetworkManager/NetworkManager.conf
+          - systemctl restart NetworkManager.service
+          - systemctl restart sshd.service
+          - ifdown ens3
+          - ifup ens3
+    wait: yes
+  with_items: "{{ nodes }}"
+
+...

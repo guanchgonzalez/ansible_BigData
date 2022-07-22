@@ -1,0 +1,9 @@
+---
+# Target hosts: local
+
+- name: Cleanup IaaS auth token
+  ovirt_auth:
+    ovirt_auth: "{{ ovirt_auth }}"
+    state: absent
+
+...

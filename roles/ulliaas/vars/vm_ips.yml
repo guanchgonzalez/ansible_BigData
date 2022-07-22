@@ -1,0 +1,8 @@
+---
+# IP's to be released in DHCP-DNS server.
+
+vm_ips:
+False
+# End of vm_ip list
+
+...

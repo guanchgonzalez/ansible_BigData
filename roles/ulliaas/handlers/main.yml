@@ -1,0 +1,10 @@
+---
+# Handlers file for ulliaas role
+
+- name: restart_services
+  service:
+    name: "{{ item }}"
+    state: restarted
+  with_items: "{{ services }}"
+
+...

@@ -1,0 +1,32 @@
+---
+# Remove a VM either in management or workers subnet, to be a master or a worker node.
+# Target hosts: local
+
+- name: Get the VM IP from workers network
+  block:
+  - name: Register the VM IP
+    debug:
+      var: hostvars['{{ prefix }}{{ item.node_sufix }}.{{ subnet }}.local']['ansible_ens4']['ipv4']['address']
+    with_items: "{{ removing }}"
+    register: vm_ip
+
+  - name: Save the VM IP into the role variables file
+    lineinfile:
+      path: /home/ansible/roles/ulliaas/vars/vm_ips.yml
+      line: "{{ item.value | ansible.netcommon.ipv4 }}"
+      insertafter: '^vm_ips:'
+    with_dict: "{{ vm_ip['results'] }}"
+
+  - name: Remove false value from variables file
+    lineinfile:
+      path: /home/ansible/roles/ulliaas_back/vars/vm_ips.yml
+      regexp: '^False'
+      state: absent
+
+  - name: Convert IP lines into list items
+    replace:
+      path: /home/ansible/roles/ulliaas/vars/vm_ips.yml
+      regexp: '^192(.+)$'
+      replace: '  - 192\1'
+
+...

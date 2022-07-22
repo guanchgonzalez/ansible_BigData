@@ -1,0 +1,17 @@
+---
+# List of nodes to be created.
+# removing list should be empty
+
+nodes:
+  - node_sufix: wn01
+  - node_sufix: wn02
+#  - node_sufix: wn03
+#  - node_sufix: wn04
+#  - node_sufix: wn05
+#  - node_sufix: wn06
+#  - node_sufix: wn07
+#  - node_sufix: wn08
+#  - node_sufix: wn09
+#  - node_sufix: wn10
+
+...

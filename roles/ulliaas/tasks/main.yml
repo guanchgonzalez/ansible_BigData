@@ -1,219 +1,60 @@
 ---
-# Deploy a VM either in management or workers subnet, to be a master or a worker node.
+# Deploy the VM either in management or workers subnet, to be a master or a worker node.
 # The Router, the DHCP-DNS and the Master server VM's must exists prior to launch this playbook.
-# Target hosts: local
-#
+# Target hosts: local, workers, dhcp
 
-- name: Login to IaaS
-  ovirt_auth:
-    url: https://iaas.ull.es/ovirt-engine/api
-    insecure: yes
-    username: "{{ ovirt_login }}"
-    password: "{{ ovirt_password }}"
-    headers:
-      filter: true
-  when: group_names | select('match', 'local') | list | length > 0
+- name: Login into ULL IaaS
+  delegate_to: local
+  include_tasks: login.yml
 
-- name: Create a VM
-  ovirt_vm:
-    auth: "{{ ovirt_auth }}"
-    cluster: Cluster-Rojo
-    name: "{{ prefix }}{{ item.node_sufix }}"
-    cpu_cores: "{{ cores }}"
-    cpu_sockets: 1
-    memory: "{{ mem }}GiB"
-    template: centos-8-cloudinit
-    nics: "{{ node_nics }}"
-    state: present
-    wait: yes
-  with_items: "{{ nodes }}"
-  when: ( removing is none ) and ( ( group_names | select('match', 'local') | list | length ) > 0 )
+- name: Create the VM's
+  when: removing is none
+  delegate_to: local
+  include_tasks: create_vm.yml
+  include_vars: nodes.yml
 
-- name: Update VM via cloud-init
-  ovirt_vm:
-    auth: "{{ ovirt_auth }}"
-    name: "{{ prefix }}{{ item.node_sufix }}"
-    state: running
-    timeout: 360
-    cloud_init_nics:
-      - nic_name: ens3
-        nic_boot_protocol: dhcp
-        nic_on_boot: True
-      - nic_name: ens4
-        nic_boot_protocol: dhcp
-        nic_on_boot: True
-    cloud_init:
-      host_name: "{{ prefix }}{{ item.node_sufix }}.{{ subnet }}.local"
-      user_name: ansible
-      root_password: $6$3diC789eX$WZPkCdIrIm11cbZyhx/uwsydqgqEb1hsBvOXIF31ngjqxYhGyXMdaHZrwsf8vZHqEBoqPoXhWANPR/itAEU7l.
-      authorized_ssh_keys: "{{ ansible_ssh_keys }}"
-      custom_script: |
-        write_files:
-          - path: /etc/sudoers.d/ansible
-            permissions: '0440'
-            content: |
-              ansible ALL=(ALL) NOPASSWD:ALL
-          - path: /tmp/saludos.txt
-            permissions: '0644'
-            content: |
-              "Que pasa pisha"
-        runcmd:
-          - sed -i '/AllowUsers/c\AllowUsers usuario soporteiass adminstic ansible' /etc/ssh/sshd_config
-          - echo 'DHCP_HOSTNAME='"{{ prefix }}{{ item.node_sufix }}" >> /etc/sysconfig/network-scripts/ifcfg-ens3
-          - echo '192.168.211.0/24 via 192.168.212.1 dev ens4' > /etc/sysconfig/network-scripts/route-ens4
-          - sed -i '/^plugins/c\#plugins=ifcfg-rh' /etc/NetworkManager/NetworkManager.conf
-          - printf '\n\n[global-dns-domain-*]\nservers=192.168.211.5, 10.4.9.29, 10.4.9.30\n' >> /etc/NetworkManager/NetworkManager.conf
-          - systemctl restart NetworkManager.service
-          - systemctl restart sshd.service
-          - ifdown ens3
-          - ifup ens3
-    wait: yes
-  with_items: "{{ nodes }}"
-  when: ( removing is none ) and ( ( group_names | select('match', 'local') | list | length ) > 0 )
-
-- name: Get the VM network facts
-  setup:
-    gather_subset: network
-  when: ( nodes is none ) and ( ( group_names | select('match', 'worker') | list | length ) > 0 )
-
-- name: Get the VM IP from workers network
-  block:
-  - name: Register the VM IP
-    debug:
-      var: hostvars['{{ prefix }}{{ item.node_sufix }}.{{ subnet }}.local']['ansible_ens4']['ipv4']['address']
-    with_items: "{{ removing }}"
-    register: vm_ip
-
-  - name: Save the VM IP into the role variables file
-    lineinfile:
-      path: /home/ansible/roles/ulliaas/vars/main.yml
-      line: "{{ item.value | ansible.netcommon.ipv4 }}"
-      insertafter: '^vm_ips:'
-    with_dict: "{{ vm_ip['results'] }}"
-
-  - name: Remove false value from variables file
-    lineinfile:
-      path: /home/ansible/roles/ulliaas/vars/main.yml
-      regexp: '^False'
-      state: absent
-
-  - name: Convert IP lines into list items
-    replace:
-      path: /home/ansible/roles/ulliaas/vars/main.yml
-      regexp: '^192(.+)$'
-      replace: '  - 192\1'
-
-  when: ( nodes is none ) and ( ( group_names | select('match', 'local') | list | length ) > 0 )
-
-- name: Reload vars file
+- name: Save the VM IP's and remove the VM's
+  when: nodes is none
   include_vars:
-    dir: "/home/ansible/roles/ulliaas/vars"
-  when: ( nodes is none ) and ( ( group_names | select('match', 'local') | list | length ) > 0 )
+    - removing.yml
+    - vm_ips.yml
 
-- name: Stop and remove VM's
   block:
-  - name: Stop VM's
-    ovirt_vm:
-      auth: "{{ ovirt_auth }}"
-      name: "{{ prefix }}{{ item.node_sufix }}"
-      state: stopped
-      timeout: 360
-    with_items: "{{ removing }}"
-  
-  - name: Remove VM's
-    ovirt_vm:
-      auth: "{{ ovirt_auth }}"
-      name: "{{ prefix }}{{ item.node_sufix }}"
-      state: absent
-      timeout: 360
-    with_items: "{{ removing }}"
+  - name: Get the VM network facts
+    delegate_to: workers
+    setup:
+      gather_subset: network
 
-  - name: Clean known_hosts file
-    lineinfile:
-      path: /home/ansible/.ssh/known_hosts
-      regexp: '{{ prefix }}{{ item.node_sufix }}.*'
-      state: absent
-    with_items: "{{ removing }}"
+  - name: Get the VM IP from workers network
+    delegate_to: local
+    include_tasks: get_vm_ip.yml
 
-  when: ( nodes is none ) and ( ( group_names | select('match', 'local') | list | length ) > 0 )
+  - name: Stop and remove VM's from ULL IaaS
+    include_tasks: remove_vm.yml
+    delegate_to: local
 
 - name: Release the VM IP's from the DHCP-DNS server
-  block:
-  - name: Clean the IP entry in the DHCP
-    replace:
-      path: /var/lib/dhcpd/dhcpd.leases
-      regexp: '(lease {{ item }} {[\s\S]*)}'
-      replace: ''
-    with_items: "{{ vm_ips }}"
-
-  - name: Remove the worker IP from workers.local.db
-    replace:
-      path: /var/named/workers.local.db
-      regexp: '(.*){{ item }}\n[^\n]+'
-      replace: ''
-    with_items: "{{ vm_ips }}"
-
-  - name: Remove empty lines from workers.local.db
-    lineinfile:
-      path: /var/named/workers.local.db
-      regexp: '^$'
-      state: absent
-
-  - name: Remove the worker hostname from workers.local.rev
-    lineinfile:
-      path: /var/named/workers.local.rev
-      regexp: '(.*){{ item.node_sufix }}\.workers\.local\.'
-      state: absent
-    with_items: "{{ removing }}"
-
-  - name: Remove DNS jnl files
-    file:
-      path: /var/named/workers.local.*.jnl
-      state: absent
-
-  - name: Restart DHCP and DNS services
-    service:
-      name: "{{ item }}"
-      state: restarted
-    with_list:
-      - named
-      - dhcpd
-
+  when: nodes is none
+  delegate_to: dhcp
   become: true
-  when: ( nodes is none ) and ( ( group_names | select('match', 'dhcp') | list | length ) > 0 )
+  include_tasks: release_dhcp_dns.yml
+  include_vars:
+    - removing.yml
+    - vm_ips.yml
 
-- name: Remove erased VM IPs from role variables file
+  notify: restart_services
+
+- name: Remove erased VM IPs from variables file
+  when: nodes is none
+  delegate_to: local
   replace:
-    path: /home/ansible/roles/ulliaas/vars/main.yml
+    path: /home/ansible/roles/ulliaas/vars/vm_ips.yml
     after: 'vm_ips:'
     regexp: '(^\s*$)'
     replace: ''
-  when: ( nodes is none ) and ( ( group_names | select('match', 'local') | list | length ) > 0 )
 
-#- name: Debug. Show hostvars.inventory_hostname
-#  debug:
-#    var: hostvars[inventory_hostname]
-#
-#- name: Debug. Show magic variables
-#  debug:
-#    var: vars
-#
-#- name: Add a second disk to the master
-#  ovirt_disk:
-#    auth: "{{ ovirt_auth }}"
-#    name: tdm-spark-rgl-disk1
-#    size: 20GiB
-#    interface: virtio
-#    format: raw
-#    activate: yes
-#    state: attached
-#  when: ( group_names | select('match', 'local') | list | length ) > 0
-#
-- name: Cleanup IaaS auth token
-  ovirt_auth:
-    ovirt_auth: "{{ ovirt_auth }}"
-    state: absent
-  become: true
-  when: group_names | select('match', 'local') | list | length > 0
+- name: Logout from ULL IaaS
+  delegate_to: local
+  include_tasks: logout.yml
 
 ...

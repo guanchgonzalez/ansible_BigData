@@ -1,0 +1,37 @@
+---
+# Release the VM IP's from the DHCP-DNS server
+# Target hosts: dhcp
+
+- name: Clean the IP entry in the DHCP
+  replace:
+    path: /var/lib/dhcpd/dhcpd.leases
+    regexp: '(lease {{ item }} {[\s\S]*)}'
+    replace: ''
+  with_items: "{{ vm_ips }}"
+
+- name: Remove the worker IP from workers.local.db
+  replace:
+    path: /var/named/workers.local.db
+    regexp: '(.*){{ item }}\n[^\n]+'
+    replace: ''
+  with_items: "{{ vm_ips }}"
+
+- name: Remove empty lines from workers.local.db
+  lineinfile:
+    path: /var/named/workers.local.db
+    regexp: '^$'
+    state: absent
+
+- name: Remove the worker hostname from workers.local.rev
+  lineinfile:
+    path: /var/named/workers.local.rev
+    regexp: '(.*){{ item.node_sufix }}\.workers\.local\.'
+    state: absent
+  with_items: "{{ removing }}"
+
+- name: Remove DNS jnl files
+  file:
+    path: /var/named/workers.local.*.jnl
+    state: absent
+
+...

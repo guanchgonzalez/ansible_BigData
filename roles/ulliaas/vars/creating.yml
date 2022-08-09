@@ -2,7 +2,7 @@
 # List of nodes to be created.
 # removing list should be empty
 
-nodes:
+creating:
 #  - node_sufix: wn01
 #  - node_sufix: wn02
 #  - node_sufix: wn03

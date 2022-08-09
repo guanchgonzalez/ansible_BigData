@@ -14,7 +14,7 @@
     nics: "{{ node_nics }}"
     state: present
     wait: yes
-  with_items: "{{ nodes }}"
+  with_items: "{{ creating }}"
 
 - name: Update VM via cloud-init
   ovirt_vm:
@@ -55,6 +55,6 @@
           - ifdown ens3
           - ifup ens3
     wait: yes
-  with_items: "{{ nodes }}"
+  with_items: "{{ creating }}"
 
 ...

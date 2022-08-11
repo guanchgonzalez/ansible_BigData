@@ -2,7 +2,7 @@
 # Main playbook to deploy all the Ansible TFM infraestructure.
 
 - hosts: local:worker:dhcp
-  gather_facts: true
+  gather_facts: false
   roles:
     - role: ulliaas
 

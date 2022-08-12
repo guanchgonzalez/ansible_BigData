@@ -5,15 +5,15 @@
 - name: Save the VM IP into the role variables file
   lineinfile:
     path: /home/ansible/roles/ulliaas/vars/vm_ips.yml
-    line: "{{ item.value | ansible.netcommon.ipv4 }}"
+    line: "{{ item }}"
     insertafter: '^vm_ips:'
-  with_dict: "{{ vm_ip['results'] }}"
+  loop: "{{ ip }}"
 
-- name: Remove "False" value from variables file
-  lineinfile:
-    path: /home/ansible/roles/ulliaas/vars/vm_ips.yml
-    regexp: '^False'
-    state: absent
+#- name: Remove "False" value from variables file
+#  lineinfile:
+#    path: /home/ansible/roles/ulliaas/vars/vm_ips.yml
+#    regexp: '^False'
+#    state: absent
 
 - name: Convert IP lines into list items
   replace:

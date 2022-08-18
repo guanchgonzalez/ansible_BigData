@@ -18,6 +18,7 @@
     - /home/ansible/.ssh/authorized_keys
 
 - name: Enabling ServerAliveInterval and ServerAliveCountMax in SSH service as client
+  become: true
   block:
   - name: Enable Host parameter
     lineinfile:
@@ -34,9 +35,8 @@
       - '  ServerAliveInterval 20'
       - '  ServerAliveCountMax 360'
 
-  become: true
-
 - name: Enabling ClientAliveInterval and ClientAliveCountMax in SSH service as server
+  become: true
   block:
   - name: Enable ClientAlive parameters
     lineinfile:
@@ -52,9 +52,8 @@
       name: sshd
       state: restarted
 
-  become: true
-
 - name: Disable IPv6 with sysctl
+  become: true
   sysctl: name={{ item }} value=1 state=present reload=yes
   with_items:
     - net.ipv6.conf.all.disable_ipv6
@@ -62,18 +61,20 @@
     - net.ipv6.conf.lo.disable_ipv6
 
 - name: Disable firewalld service
+  become: true
   service:
     name: firewalld
     state: stopped
     enabled: no
 
 - name: Check availability of VM's
+  become: true
   copy:
     content: "  VM gestionada por los roles/playbooks de Ansible.\n"
     dest: /etc/motd
-  become: true
 
 - name: Fix 6704151 RedHat8/Centos8 issue with repos
+  become: true
   block:
   - name: Locate all the repo files
     find:
@@ -81,7 +82,7 @@
       patterns: '*.repo'
     register: repos
 
-  - name: Comment mirrolist line
+  - name: Comment mirrorlist line
     replace:
       path: "{{ item.path }}"
       regexp: '^mirrorlist'
@@ -95,17 +96,15 @@
       replace: 'baseurl=http://vault'
     with_items: "{{ repos.files }}"
 
-  - name: Yum clean all
+  - name: Dnf clean all
     command: dnf clean all
     ignore_errors: yes
 
-  - name: Yum substitute Centos-Linux by Centos-Stream repos
+  - name: Dnf substitute Centos-Linux by Centos-Stream repos
     command: dnf -y swap centos-linux-repos centos-stream-repos
     ignore_errors: yes
 
-  become: true
-
-- name: Include the YUM update role
+- name: Include the DNF update role
   include_role:
     name: packages
   vars:
@@ -126,6 +125,7 @@
   ignore_errors: yes
 
 - name: Deploying the Java profile.d shell script
+  become: true
   block:
   - name: Create an empty Java profile.d file
     file:
@@ -142,9 +142,8 @@
         export JAVA_HOME=/etc/alternatives/jre
         export PATH=${JAVA_HOME}/bin:${PATH}
 
-  become: true
-
 - name: Disable SElinux and reboot workers
+  become: true
   block:
   - name: Disable SElinux
     selinux:

@@ -3,10 +3,10 @@
 # The Router, the DHCP-DNS and the Master server VM's must exists prior to launch this playbook.
 # Target hosts: local, workers, dhcp
 
-#- name: Login into ULL IaaS
-#  when: inventory_hostname in groups['local']
-#  include_tasks: login.yml
-#
+- name: Login into ULL IaaS
+  when: inventory_hostname in groups['local']
+  include_tasks: login.yml
+
 - name: Include nodes vars files
   include_vars: "{{ item }}"
   with_items:
@@ -37,6 +37,7 @@
 #  delegate_to: localhost
 
 - name: Set an empty list fact
+  when:
     - creating is none
     - inventory_hostname in groups['worker']
   set_fact:
@@ -67,25 +68,24 @@
 #  debug:
 #    var: ip_list
 #
-- name: Set the VM IP's into the vars file
-  when:
-    - creating is none
-    - inventory_hostname in groups['local']
-  include_tasks: set_vm_ip.yml
-  vars:
-    ip: "{{ ip_list | list | join }}"
-
-#- name: Stop and remove VM's from ULL IaaS
+#- name: Set the VM IP's into the vars file
 #  when:
 #    - creating is none
 #    - inventory_hostname in groups['local']
-#  include_tasks: remove_vm.yml
+#  include_tasks: set_vm_ip.yml
+#  vars:
+#    ip: "{{ ip_list | list | join }}"
 #
-- name: Include removing and vm_ips vars files
+- name: Stop and remove VM's from ULL IaaS
   when:
     - creating is none
     - inventory_hostname in groups['local']
-    - inventory_hostname in groups['dhcp']
+  include_tasks: remove_vm.yml
+
+- name: Include removing and vm_ips vars files
+  when:
+    - creating is none
+    - inventory_hostname in groups['local'] or inventory_hostname in groups['dhcp']
   include_vars: "{{ item }}"
   with_items:
     - removing.yml

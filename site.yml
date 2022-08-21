@@ -12,9 +12,18 @@
 #    - role: base
 #
 - hosts: namenode:datanode:local
-  gather_facts: true
-  roles:
-    - role: hadoop
+#  gather_facts: true
+#  roles:
+#    - role: hadoop
+  tasks:
+    - name: Remove hadoop user environment
+      become: true
+      ignore_errors: true
+      when: inventory_hostname != 'localhost'
+      shell: |
+        ps -fuhadoop | grep hadoop | awk '{print $2}' | xargs kill -9
+        rm -rf /home/hadoop
+        userdel hadoop
 
 #- hosts: tdm_master:tdm_worker:local
 #  gather_facts: true

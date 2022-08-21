@@ -7,7 +7,7 @@
 - name: Execute all the Dnf actions
   become: true
   when: inventory_hostname != 'localhost'
-  ignore_errors: yes
+  ignore_errors: true
   block:
   - name: Update all OS packages
     dnf:
@@ -26,7 +26,7 @@
 
   - name: Dnf clean all
     command: dnf clean all
-    ignore_errors: yes
+    ignore_errors: true
 
   - name: Update mlocate DB (register all the files into the VM)
     command: updatedb

@@ -73,7 +73,7 @@
       mode: '0644'
 
   - name: Include the user public key into its authorized_keys file
-    ignore_errors: yes
+    ignore_errors: true
     shell: |
       encr=$(awk '{print $2}' /home/{{ usern }}/.ssh/id_rsa.pub)
       grep ${encr} /home/{{ usern }}/.ssh/authorized_keys

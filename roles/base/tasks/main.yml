@@ -98,11 +98,11 @@
 
   - name: Dnf clean all
     command: dnf clean all
-    ignore_errors: yes
+    ignore_errors: true
 
   - name: Dnf substitute Centos-Linux by Centos-Stream repos
     command: dnf -y swap centos-linux-repos centos-stream-repos
-    ignore_errors: yes
+    ignore_errors: true
 
 - name: Include the DNF update role
   include_tasks: "{{ playbook_dir }}/common_tasks/packages.yml"

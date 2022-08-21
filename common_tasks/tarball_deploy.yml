@@ -8,7 +8,7 @@
   when: inventory_hostname in groups['local']
   block:
   - name: Download the latest Hadoop tarball
-    ignore_errors: yes
+    ignore_errors: true
     when: "{{ usern == 'hadoop' }}"
     shell: |
       file=$(wget -qO- https://archive.apache.org/dist/hadoop/core/current2/ | grep 'hadoop-[0-9\.*]' | grep '.tar.gz"' | grep -iv '\-[a-z]' | sed -e 's/.*href=//' | cut -d'"' -f2 | tr -d '/')
@@ -18,7 +18,7 @@
     register: var_tarball
 
   - name: Download the latest Spark tarball
-    ignore_errors: yes
+    ignore_errors: true
     when: "{{ usern == 'spark' }}"
     shell: |
       spark_version=$(wget -qO- https://archive.apache.org/dist/spark/ | grep 'folder\.gif' | grep '[0-9]\.[0-9]*/<' | sed -e 's/.*href=//' | cut -d'"' -f2 | sort -V | tail -1)
@@ -28,7 +28,7 @@
     register: var_tarball
 
   - name: Download the latest Kafka tarball
-    ignore_errors: yes
+    ignore_errors: true
     when: "{{ usern == 'kafka' }}"
     shell: |
       kafka_version=$(wget -qO- https://archive.apache.org/dist/kafka/ | grep 'folder\.gif' | grep '[0-9]\.[0-9]*/<' | grep -iv '\-[a-z]' | sed -e 's/.*href=//' | cut -d'"' -f2 | tr -d '/' | sort -V | tail -1)

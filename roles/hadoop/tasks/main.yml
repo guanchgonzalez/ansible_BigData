@@ -3,9 +3,8 @@
 # Target hosts: namenode, datanode
 #
 
-- name: Include common role
-  include_role:
-    name: common_role
+- name: Include common tasks for Hadoop framework
+  include_tasks: "{{ playbook_dir }}/common_tasks/main.yml"
 
 #- name: Creating Hadoop user
 #  block:
@@ -140,6 +139,9 @@
 #      rm -f /home/hadoop/${vers}.tar.gz
 #
 - name: Deploy the Hadoop framework thru the cluster
+  become: true
+  become_user: hadoop
+  when: inventory_hostname in groups['namenode'] or inventory_hostname in groups['datanode']
   block:
   - name: Configure core-site.xml file
     blockinfile:
@@ -292,38 +294,36 @@
       create: yes
     loop: "{{ groups.datanode }}"
 
+- name: Creating data paths tree by node type
   become: true
   become_user: hadoop
-  when: ( group_names | select('match', 'local') | list | length ) == 0
-
-- name: Creating data paths tree by node type
   block:
   - name: Create common data root path
+    when: inventory_hostname in groups['namenode'] or inventory_hostname in groups['datanode']
     file:
       path: /home/hadoop/hdfs
       state: directory
       owner: hadoop
       group: hadoop
       mode: '0700'
-    when: ( group_names | select('match', 'local') | list | length ) == 0
 
   - name: Create Datanodes data path
+    when: inventory_hostname in groups['datanode']
     file:
       path: /home/hadoop/hdfs/datanode
       state: directory
       owner: hadoop
       group: hadoop
       mode: '0700'
-    when: ( group_names | select('match', 'datanode') | list | length ) > 0
 
   - name: Create Namenode data path
+    when: inventory_hostname in groups['namenode']
     file:
       path: /home/hadoop/hdfs/namenode
       state: directory
       owner: hadoop
       group: hadoop
       mode: '0700'
-    when: ( group_names | select('match', 'namenode') | list | length ) > 0
 
 #- name: Remove previous datanodes entries from the namenode known_hosts file
 #  shell: sed -i "/^{{ item }}.*$/d" /home/hadoop/.ssh/known_hosts
@@ -340,6 +340,9 @@
 #  when: ( group_names | select('match', 'namenode') | list | length ) > 0
 #
 - name: Formating HDFS filesystems, starting Hadoop cluster daemons and deploying MapReduce files in the Namenode
+  become: true
+  become_user: hadoop
+  when: inventory_hostname in groups['namenode']
   block:
   - name: Format Namenode HDFS
     shell: |
@@ -371,11 +374,9 @@
       src: files/MapReduce/
       dest: /home/hadoop
 
-  become: true
-  become_user: hadoop
-  when: ( group_names | select('match', 'namenode') | list | length ) > 0
-
 - name: Changing owner and group of deployed files and fixing original HOME permissions
+  become: true
+  when: inventory_hostname in groups['namenode']
   block:
   - name: Change owner and group of deployed files
     file:
@@ -390,9 +391,6 @@
       path: /home/hadoop
       state: directory
       mode: '0700'
-
-  become: true
-  when: ( group_names | select('match', 'namenode') | list | length ) > 0
 
 #- name: Delete the tarball from the Ansible server
 #  file:

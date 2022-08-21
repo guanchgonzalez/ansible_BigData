@@ -105,10 +105,9 @@
     ignore_errors: yes
 
 - name: Include the DNF update role
-  include_role:
-    name: packages
+  include_tasks: "{{ playbook_dir }}/common_tasks/packages.yml"
   vars:
-    packs:
+    packages:
       - regex_name: bind
       - regex_name: bind-utils
       - regex_name: bind-lib*
@@ -122,7 +121,6 @@
       - regex_name: tree
       - regex_name: vim
       - regex_name: wget
-  ignore_errors: yes
 
 - name: Deploying the Java profile.d shell script
   become: true

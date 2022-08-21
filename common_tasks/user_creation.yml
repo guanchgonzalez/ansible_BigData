@@ -5,24 +5,35 @@
 #
 
 - name: Generate a new encrypted user password
+  become: true
+  when: inventory_hostname in groups['local']
   block:
   - name: Encrypt user password with openssl
     shell: echo {{ usern }} | openssl passwd -6 -stdin
     register: uspass
 
+  - name: Deploy the user profile.d shell script template
+    copy:
+      src: "{{ playbook_dir }}/vars/user_creation_vars.yml"
+      dest: "{{ playbook_dir }}/vars/{{ usern }}.yml"
+      owner: ansible
+      group: ansible
+      mode: '0644'
+
   - name: Save the new encrypted password as a variable
     replace:
-      path: "/home/ansible/roles/{{ usern }}/vars/main.yml"
+      path: "{{ playbook_dir }}/vars/{{ usern }}.yml"
       regexp: '^username_SHA512_pass: (.*)$'
-      replace: "username_SHA512_pass: {{ uspass }}"
-
-  when: ( group_names | select('match', 'local') | list | length ) > 0
+      replace: "username_SHA512_pass: {{ uspass.stdout }}"
 
 - name: Reload vars file
-  include_vars:
-    dir: "/home/ansible/roles/{{ usern }}/vars"
+  become: true
+  when: inventory_hostname != 'localhost'
+  include_vars: "{{ playbook_dir }}/vars/{{ usern }}.yml"
 
 - name: Create the group and the user with password
+  become: true
+  when: inventory_hostname != 'localhost'
   block:
   - name: Create user group
     group:
@@ -36,9 +47,10 @@
       password: "{{ username_SHA512_pass }}"
       generate_ssh_key: yes
 
-  when: ( group_names | select('match', 'local') | list | length ) == 0
-
 - name: Deploy SSH keys relationships on every cluster node
+  become: true
+  become_user: "{{ usern }}"
+  when: inventory_hostname != 'localhost'
   block:
   - name: Create user authorized_keys file and grant read permissions to both id_rsa.pub and authorized_keys files
     file:
@@ -61,17 +73,15 @@
       mode: '0644'
 
   - name: Include the user public key into its authorized_keys file
+    ignore_errors: yes
     shell: |
       encr=$(awk '{print $2}' /home/{{ usern }}/.ssh/id_rsa.pub)
       grep ${encr} /home/{{ usern }}/.ssh/authorized_keys
       [[ $? -ne 0 ]] && cat /home/{{ usern }}/.ssh/id_rsa.pub >> /home/{{ usern }}/.ssh/authorized_keys
-    ignore_errors: yes
-
-  become: true
-  become_user: "{{ usern }}"
-  when: ( group_names | select('match', 'local') | list | length ) == 0
 
 - name: Enable SSH login to remote users
+  become: true
+  when: inventory_hostname != 'localhost'
   shell: |
     grep AllowUsers /etc/ssh/sshd_config | grep "{{ usern }}"
     if [ $? -ne 0 ]
@@ -80,16 +90,17 @@
       line=${line}" "{{ usern }}
       sed -i "s/AllowUsers.*$/${line}/" /etc/ssh/sshd_config
     fi
-  become: true
-  when: ( group_names | select('match', 'local') | list | length ) == 0
 
 - name: Restart SSH service
+  become: true
+  when: inventory_hostname != 'localhost'
   service:
     name: sshd
     state: restarted
-  when: ( group_names | select('match', 'local') | list | length ) == 0
 
 - name: Deploy the user profile.d shell script
+  become: true
+  when: inventory_hostname != 'localhost'
   block:
   - name: Deploy the user profile.d shell script template
     copy:
@@ -105,8 +116,5 @@
       sed -i 's/__var__/{{ usern }}/' /etc/profile.d/{{ usern }}.sh
     args:
       warn: no
-
-  become: true
-  when: ( group_names | select('match', 'local') | list | length ) == 0
 
 ...

@@ -145,7 +145,7 @@
   block:
   - name: Configure core-site.xml file
     blockinfile:
-      path: /home/hadoop/{{ hadoop_version }}/etc/hadoop/core-site.xml
+      path: /home/hadoop/{{ version }}/etc/hadoop/core-site.xml
       insertafter: '<configuration>'
       marker: <!-- {mark} ANSIBLE MANAGED BLOCK -->
       block: |
@@ -156,7 +156,7 @@
 
   - name: Configure hdfs-site.xml file
     blockinfile:
-      path: /home/hadoop/{{ hadoop_version }}/etc/hadoop/hdfs-site.xml
+      path: /home/hadoop/{{ version }}/etc/hadoop/hdfs-site.xml
       insertafter: '<configuration>'
       marker: <!-- {mark} ANSIBLE MANAGED BLOCK -->
       block: |
@@ -175,7 +175,7 @@
 
   - name: Configure yarn-site.xml file
     blockinfile:
-      path: /home/hadoop/{{ hadoop_version }}/etc/hadoop/yarn-site.xml
+      path: /home/hadoop/{{ version }}/etc/hadoop/yarn-site.xml
       insertafter: '<configuration>'
       marker: <!-- {mark} ANSIBLE MANAGED BLOCK -->
       block: |
@@ -221,11 +221,11 @@
         </property>
 
   - name: Rename the mapred-site.xml template file
-    shell: cp -p /home/hadoop/{{ hadoop_version }}/etc/hadoop/mapred-site.xml.template /home/hadoop/{{ hadoop_version }}/etc/hadoop/mapred-site.xml
+    shell: cp -p /home/hadoop/{{ version }}/etc/hadoop/mapred-site.xml.template /home/hadoop/{{ version }}/etc/hadoop/mapred-site.xml
 
   - name: Configure mapred-site.xml file
     blockinfile:
-      path: /home/hadoop/{{ hadoop_version }}/etc/hadoop/mapred-site.xml
+      path: /home/hadoop/{{ version }}/etc/hadoop/mapred-site.xml
       insertafter: '<configuration>'
       marker: <!-- {mark} ANSIBLE MANAGED BLOCK -->
       block: |
@@ -268,19 +268,19 @@
 
   - name: Create masters file
     lineinfile:
-      path: /home/hadoop/{{ hadoop_version }}/etc/hadoop/masters
+      path: /home/hadoop/{{ version }}/etc/hadoop/masters
       line: "{{ groups.namenode | first }}"
       mode: '0644'
       create: yes
 
   - name: Remove default slaves file
     file:
-      path: /home/hadoop/{{ hadoop_version }}/etc/hadoop/slaves
+      path: /home/hadoop/{{ version }}/etc/hadoop/slaves
       state: absent
 
   - name: Create slaves file
     lineinfile:
-      path: /home/hadoop/{{ hadoop_version }}/etc/hadoop/slaves
+      path: /home/hadoop/{{ version }}/etc/hadoop/slaves
       line: "{{ item }}"
       mode: '0644'
       create: yes
@@ -288,7 +288,7 @@
 
   - name: Create workers file
     lineinfile:
-      path: /home/hadoop/{{ hadoop_version }}/etc/hadoop/workers
+      path: /home/hadoop/{{ version }}/etc/hadoop/workers
       line: "{{ item }}"
       mode: '0644'
       create: yes

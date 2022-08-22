@@ -8,9 +8,9 @@ username_SHA512_pass: hadoop
 packages:
   - regex_name: java-1.8.0-openjdk-devel
 
-version: hadoop
+version: hadoop-2.10.2
 
-tarball: hadoop
+file: hadoop-2.10.2.tar.gz
 
 # Cluster ID
 

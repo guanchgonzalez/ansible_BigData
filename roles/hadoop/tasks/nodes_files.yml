@@ -1,0 +1,40 @@
+---
+# Deploy the master and slaves/workers config files thru the entire Hadoop infraestructure
+# Target hosts: namenode, datanode
+# Vars: N/A
+#
+
+- name: Deploy the master and slaves/workers config files for every node
+  become: true
+  become_user: hadoop
+  when: inventory_hostname != 'localhost'
+  block:
+  - name: Create masters file
+    lineinfile:
+      path: /home/hadoop/{{ version }}/etc/hadoop/masters
+      line: "{{ groups.namenode | first }}"
+      mode: '0644'
+      create: yes
+
+  - name: Remove default slaves file
+    file:
+      path: /home/hadoop/{{ version }}/etc/hadoop/slaves
+      state: absent
+
+  - name: Create slaves file
+    loop: "{{ groups.datanode }}"
+    lineinfile:
+      path: /home/hadoop/{{ version }}/etc/hadoop/slaves
+      line: "{{ item }}"
+      mode: '0644'
+      create: yes
+
+  - name: Create workers file
+    loop: "{{ groups.datanode }}"
+    lineinfile:
+      path: /home/hadoop/{{ version }}/etc/hadoop/workers
+      line: "{{ item }}"
+      mode: '0644'
+      create: yes
+
+...

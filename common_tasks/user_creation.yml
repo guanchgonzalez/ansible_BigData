@@ -12,24 +12,16 @@
     shell: echo {{ usern }} | openssl passwd -6 -stdin
     register: uspass
 
-  - name: Deploy the user profile.d shell script template
-    copy:
-      src: "{{ playbook_dir }}/vars/user_creation_vars.yml"
-      dest: "{{ playbook_dir }}/vars/{{ usern }}.yml"
-      owner: ansible
-      group: ansible
-      mode: '0644'
-
   - name: Save the new encrypted password as a variable
     replace:
-      path: "{{ playbook_dir }}/vars/{{ usern }}.yml"
+      path: "{{ role_path }}/vars/main.yml"
       regexp: '^username_SHA512_pass: (.*)$'
       replace: "username_SHA512_pass: {{ uspass.stdout }}"
 
 - name: Reload vars file
   become: true
   when: inventory_hostname != 'localhost'
-  include_vars: "{{ playbook_dir }}/vars/{{ usern }}.yml"
+  include_vars: "{{ role_path }}/vars/main.yml"
 
 - name: Create the group and the user with password
   become: true
@@ -101,20 +93,13 @@
 - name: Deploy the user profile.d shell script
   become: true
   when: inventory_hostname != 'localhost'
-  block:
-  - name: Deploy the user profile.d shell script template
-    copy:
-      src: generic_profile.sh
-      dest: /etc/profile.d/{{ usern }}.sh
-      owner: root
-      group: root
-      mode: '0644'
-
-  - name: Substitute the username into the user profile.d shell script
-    shell: |
-      sed -i 's/__var__/{{ usern | upper }}/' /etc/profile.d/{{ usern }}.sh
-      sed -i 's/__var__/{{ usern }}/' /etc/profile.d/{{ usern }}.sh
-    args:
-      warn: no
+  copy:
+    dest: /etc/profile.d/{{ usern }}.sh
+    owner: root
+    group: root
+    mode: '0644'
+    content: |
+      export {{ usern | upper }}_HOME=/home/{{ usern }}
+      export PATH={{ '${' }}{{ usern | upper }}_HOME{{ '}' }}/VERSION/bin{{ ':${' }}{{ usern | upper }}_HOME{{ '}' }}/VERSION/sbin{{ ':${' }}{{ usern | upper }}_HOME{{ '}/bin:${' }}PATH{{ '}' }}
 
 ...

@@ -1,0 +1,86 @@
+---
+# Deploy the MapReduce config file thru the entire Hadoop infraestructure
+# Target hosts: namenode, datanode
+# Vars: N/A
+#
+
+- name: Deploy the MapReduce config file for every node
+  become: true
+  become_user: hadoop
+  when: inventory_hostname != 'localhost'
+  block:
+  - name: Copy yarn-site.xml template
+    copy:
+      src: "/home/hadoop/{{ version }}/etc/hadoop/mapred-site.xml.template"
+      dest: "/home/hadoop/{{ version }}/etc/hadoop/mapred-site.xml"
+      owner: hadoop
+      group: hadoop
+      mode: '0755'
+
+  - name: Configure mapred-site.xml file common parameters for Map and Reduce
+    blockinfile:
+      path: /home/hadoop/{{ version }}/etc/hadoop/mapred-site.xml
+      insertbefore: '</configuration>'
+      marker: <!-- {mark} COMMON MAPREDUCE BLOCK -->
+      block: |
+        <property>
+            <name>mapreduce.framework.name</name>
+            <value>yarn</value>
+        </property>
+        <property>
+            <name>yarn.app.mapreduce.am.command-opts</name>
+            <value>-Xmx{{ ( ( ansible_memtotal_mb / 4 ) - 128 ) | int }}m</value>
+        </property>
+        <property>
+            <name>yarn.app.mapreduce.am.resource.mb</name>
+            <value>{{ ( ansible_memtotal_mb / 4 ) | int }}</value>
+        </property>
+        <property>
+            <name>mapreduce.task.io.sort.mb</name>
+            <value>512</value>
+        </property>
+        <property>
+            <name>mapreduce.task.io.sort.factor</name>
+            <value>100/value>
+        </property>
+        <property>
+            <name>yarn.app.mapreduce.am.resource.mb</name>
+            <value>{{ ( ansible_memtotal_mb / 2 ) | int }}</value>
+        </property>
+        <property>
+            <name>yarn.app.mapreduce.am.resource.cpu-vcores</name>
+            <value>1</value>
+        </property>
+
+  - name: Configure mapred-site.xml file for Map
+    blockinfile:
+      path: /home/hadoop/{{ version }}/etc/hadoop/mapred-site.xml
+      insertbefore: '</configuration>'
+      marker: <!-- {mark} MAP BLOCK -->
+      block: |
+        <property>
+            <name>mapreduce.map.memory.mb</name>
+            <value>{{ ( ansible_memtotal_mb * 5 / 8 | int }}</value>
+        </property>
+        <property>
+            <name>mapreduce.map.cpu.vcores</name>
+            <value>1</value>
+        </property>
+
+  - name: Configure mapred-site.xml file for Reduce
+    blockinfile:
+      path: /home/hadoop/{{ version }}/etc/hadoop/mapred-site.xml
+      insertbefore: '</configuration>'
+      marker: <!-- {mark} REDUCE BLOCK -->
+      block: |
+        <property>
+            <name>mapreduce.reduce.memory.mb</name>
+            <value>{{ ( ansible_memtotal_mb * 5 / 8 | int }}</value>
+        </property>
+        <property>
+            <name>mapreduce.reduce.cpu.vcores</name>
+            <value>1</value>
+        </property>
+
+
+...

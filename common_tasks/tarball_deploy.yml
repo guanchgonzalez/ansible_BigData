@@ -95,6 +95,14 @@
       path: "/home/{{ usern }}/{{ file }}"
       state: absent
 
+- name: Update the /etc/profile.d user script
+  become: true
+  when: inventory_hostname != 'localhost'
+  replace:
+    path: "/etc/profile.d/{{ usern }}.sh"
+    regexp: 'VERSION'
+    replace: "{{ version }}"
+
 - name: Delete the tarball from the cluster master
   when: inventory_hostname in groups['local']
   file:

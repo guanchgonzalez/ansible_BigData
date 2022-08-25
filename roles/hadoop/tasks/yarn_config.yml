@@ -6,12 +6,12 @@
 
 - name: Deploy the YARN config file for every node
   become: true
-  become_user: hadoop
+  become_user: "{{ username }}"
   when: inventory_hostname != 'localhost'
   block:
   - name: Configure yarn-site.xml file common parameters for ResourceManager and NodeManager
     blockinfile:
-      path: /home/hadoop/{{ version }}/etc/hadoop/yarn-site.xml
+      path: "/home/{{ username }}/{{ version }}/etc/hadoop/yarn-site.xml"
       insertbefore: '</configuration>'
       marker: <!-- {mark} COMMON RM AND NM BLOCK -->
       block: |
@@ -26,7 +26,7 @@
 
   - name: Configure yarn-site.xml file parameters for ResourceManager
     blockinfile:
-      path: /home/hadoop/{{ version }}/etc/hadoop/yarn-site.xml
+      path: "/home/{{ username }}/{{ version }}/etc/hadoop/yarn-site.xml"
       insertbefore: '</configuration>'
       marker: <!-- {mark} RM BLOCK -->
       block: |
@@ -53,7 +53,7 @@
 
   - name: Configure yarn-site.xml file parameters for NodeManager
     blockinfile:
-      path: /home/hadoop/{{ version }}/etc/hadoop/yarn-site.xml
+      path: "/home/{{ username }}/{{ version }}/etc/hadoop/yarn-site.xml"
       insertbefore: '</configuration>'
       marker: <!-- {mark} NM BLOCK -->
       block: |

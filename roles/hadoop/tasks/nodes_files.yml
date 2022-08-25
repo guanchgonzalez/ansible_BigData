@@ -1,30 +1,53 @@
 ---
-# Deploy the master and slaves/workers config files thru the entire Hadoop infraestructure
+# Create the data directories and the master and slaves/workers config files thru the entire Hadoop infraestructure
 # Target hosts: namenode, datanode
 # Vars: N/A
 #
 
-- name: Deploy the master and slaves/workers config files for every node
+- name: Create the Hadoop and HDFS data directories for every node
   become: true
-  become_user: hadoop
+  become_user: "{{ username }}"
+  when: inventory_hostname != 'localhost'
+  block:
+  - name: Create Hadoop data tmp directory
+    file:
+      path: "/home/{{ username }}/hdfs/tmp"
+      mode: '0700'
+      state: directory
+
+  - name: Create HDFS namenode directory
+    file:
+      path: "/home/{{ username }}/hdfs/namenode"
+      mode: '0700'
+      state: directory
+
+  - name: Create HDFS datanode directory
+    file:
+      path: "/home/{{ username }}/hdfs/datanode"
+      mode: '0700'
+      state: directory
+
+- name: Create the master and slaves/workers config files for every node
+  become: true
+  become_user: "{{ username }}"
   when: inventory_hostname != 'localhost'
   block:
   - name: Create masters file
     lineinfile:
-      path: /home/hadoop/{{ version }}/etc/hadoop/masters
+      path: "/home/{{ username }}/{{ version }}/etc/hadoop/masters"
       line: "{{ groups.namenode | first }}"
       mode: '0644'
       create: yes
 
   - name: Remove default slaves file
     file:
-      path: /home/hadoop/{{ version }}/etc/hadoop/slaves
+      path: "/home/{{ username }}/{{ version }}/etc/hadoop/slaves"
       state: absent
 
   - name: Create slaves file
     loop: "{{ groups.datanode }}"
     lineinfile:
-      path: /home/hadoop/{{ version }}/etc/hadoop/slaves
+      path: "/home/{{ username }}/{{ version }}/etc/hadoop/slaves"
       line: "{{ item }}"
       mode: '0644'
       create: yes
@@ -32,9 +55,40 @@
   - name: Create workers file
     loop: "{{ groups.datanode }}"
     lineinfile:
-      path: /home/hadoop/{{ version }}/etc/hadoop/workers
+      path: "/home/{{ username }}/{{ version }}/etc/hadoop/workers"
       line: "{{ item }}"
       mode: '0644'
       create: yes
+
+- name: Define log root paths into env files
+  become: true
+  become_user: "{{ username }}"
+  when: inventory_hostname != 'localhost'
+  block:
+  - name:  Define logger hadoop.log.dir
+    lineinfile:
+      path: "/home/{{ username }}/{{ version }}/etc/hadoop/log4j.properties"
+      regexp: '^hadoop\.log\.dir='
+      line: "hadoop.log.dir=/var/log/{{ username }}"
+
+  - name: Define Hadoop log dir
+    lineinfile:
+      path: "/home/{{ username }}/{{ version }}/etc/hadoop/hadoop-env.sh"
+      lineafter: '^#export HADOOP_LOG_DIR='
+      line: "export HADOOP_LOG_DIR=/var/log/{{ username }}"
+
+  - name: Create Yarn log subdir
+    file:
+      path: "/var/log/{{ username }}/yarn"
+      state: directory
+      owner: "{{ username }}"
+      group: "{{ username }}"
+      mode: '0755'
+
+  - name: Define Yarn log dir
+    lineinfile:
+      path: "/home/{{ username }}/{{ version }}/etc/hadoop/yarn-env.sh"
+      regexp: '^  YARN_LOG_DIR='
+      line: "  YARN_LOG_DIR=/var/log/{{ username }}/yarn"
 
 ...

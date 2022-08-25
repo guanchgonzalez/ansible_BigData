@@ -3,6 +3,20 @@
 # Target hosts: namenode, datanode
 #
 
+- name: Include common deployment tasks for Hadoop infraestructure
+  include_tasks: "{{ playbook_dir }}/common_tasks/main.yml"
+
+- name: Get Memory facts in MB
+  when: inventory_hostname != 'localhost'
+  block:
+  - name: Get all memory related facts
+    setup:
+      filter: 'ansible_*_mb'
+
+  - name: Show all collected facts
+    debug:
+      var: ansible_facts
+
 - name: Include common and HDFS config tasks for Hadoop framework deployment
   include_tasks: "{{ role_path }}/tasks/hdfs_config.yml"
 
@@ -12,7 +26,7 @@
 - name: Include MapReduce config tasks for Hadoop framework deployment
   include_tasks: "{{ role_path }}/tasks/mapred_config.yml"
 
-- name: Include master and slaves/workers tasks for Hadoop framework deployment
+- name: Include files creation tasks for Hadoop framework deployment
   include_tasks: "{{ role_path }}/tasks/nodes_files.yml"
 
 - name: Formating HDFS filesystems, starting Hadoop cluster daemons and deploying MapReduce files in the Namenode
@@ -48,7 +62,7 @@
   - name: Deploy MapReduce files keeping its permissions (Ansible copy don't keep it)
     ansible.posix.synchronize:
       src: files/MapReduce/
-      dest: /home/hadoop
+      dest: "/home/{{ username }}"
 
 - name: Changing owner and group of deployed files and fixing original HOME permissions
   become: true
@@ -56,15 +70,15 @@
   block:
   - name: Change owner and group of deployed files
     file:
-      path: /home/hadoop
-      owner: hadoop
-      group: hadoop
+      path: "/home/{{ username }}"
+      owner: "{{ username }}"
+      group: "{{ username }}"
       state: directory
       recurse: yes
 
   - name: Fix original HOME permissions
     file:
-      path: /home/hadoop
+      path: "/home/{{ username }}"
       state: directory
       mode: '0700'
 

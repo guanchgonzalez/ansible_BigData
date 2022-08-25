@@ -6,12 +6,12 @@
 
 - name: Deploy the common Hadoop and HDFS config files for every node
   become: true
-  become_user: hadoop
+  become_user: "{{ username }}"
   when: inventory_hostname != 'localhost'
   block:
   - name: Configure common core-site.xml file
     blockinfile:
-      path: /home/hadoop/{{ version }}/etc/hadoop/core-site.xml
+      path: "/home/{{ username }}/{{ version }}/etc/hadoop/core-site.xml"
       insertbefore: '</configuration>'
       marker: <!-- {mark} COMMON MAIN HADOOP BLOCK -->
       block: |
@@ -23,16 +23,20 @@
             <name>io.file.buffer.size</name>
             <value>131072</value>
         </property>
+        <property>
+            <name>hadoop.tmp.dir</name>
+            <value>file:///home/{{ username }}/hdfs/tmp</value>
+        </property>
 
   - name: Configure hdfs-site.xml file parameters for namenode
     blockinfile:
-      path: /home/hadoop/{{ version }}/etc/hadoop/hdfs-site.xml
+      path: "/home/{{ username }}/{{ version }}/etc/hadoop/hdfs-site.xml"
       insertbefore: '</configuration>'
       marker: <!-- {mark} NN HDFS BLOCK -->
       block: |
         <property>
             <name>dfs.replication</name>
-            <value>{{ 1 if ( groups.datanode | length < 3 ) else 3 ) | int }}</value>
+            <value>{{ ( 1 if ( groups.datanode | length < 3 ) else 3 ) | int }}</value>
         </property>
         <property>
             <name>dfs.blocksize</name>
@@ -44,18 +48,18 @@
         </property>
         <property>
             <name>dfs.namenode.name.dir</name>
-            <value>file:/home/hadoop/hdfs/namenode</value>
+            <value>file:///home/{{ username }}/hdfs/namenode</value>
         </property>
 
   - name: Configure hdfs-site.xml file parameter for datanodes
     blockinfile:
-      path: /home/hadoop/{{ version }}/etc/hadoop/hdfs-site.xml
+      path: "/home/{{ username }}/{{ version }}/etc/hadoop/hdfs-site.xml"
       insertbefore: '</configuration>'
       marker: <!-- {mark} DN HDFS BLOCK -->
       block: |
         <property>
-            <name>dfs.datanode.name.dir</name>
-            <value>file:/home/hadoop/hdfs/datanode</value>
+            <name>dfs.datanode.data.dir</name>
+            <value>file:///home/{{ username }}/hdfs/datanode</value>
         </property>
 
 ...

@@ -74,7 +74,7 @@
   - name: Define Hadoop log dir
     lineinfile:
       path: "/home/{{ username }}/{{ version }}/etc/hadoop/hadoop-env.sh"
-      lineafter: '^#export HADOOP_LOG_DIR='
+      insertafter: '^#export HADOOP_LOG_DIR='
       line: "export HADOOP_LOG_DIR=/var/log/{{ username }}"
 
   - name: Create Yarn log subdir

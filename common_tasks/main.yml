@@ -1,24 +1,24 @@
 ---
 # Launch the common tasks on every cluster node.
-# This is the common base of every technology framework (role).
+# This is the common base for every technology framework (role).
 # Target hosts: worker
 # Vars: username
 #
 
-#- name: Check availability of VM's
-#  become: true
-#  copy:
-#    content: "  VM gestionada por los roles/playbooks de Ansible.\n"
-#    dest: /etc/motd
-#
+- name: Check availability of VM's
+  become: true
+  copy:
+    content: "  VM gestionada por los roles/playbooks de Ansible.\n"
+    dest: /etc/motd
+
 - name: Include the role specific variables file
   include_vars: "{{ role_path }}/vars/main.yml"
 
-#- name: Include the DNF update role
-#  include_tasks: "{{ playbook_dir }}/common_tasks/packages.yml"
-#  vars:
-#    packs: "{{ packages }}"
-#
+- name: Include the DNF update role
+  include_tasks: "{{ playbook_dir }}/common_tasks/packages.yml"
+  vars:
+    packs: "{{ packages }}"
+
 - name: Include the technology own user creation role
   include_tasks: "{{ playbook_dir }}/common_tasks/user_creation.yml"
   vars:
@@ -30,4 +30,3 @@
     usern: "{{ username }}"
 
 ...
-

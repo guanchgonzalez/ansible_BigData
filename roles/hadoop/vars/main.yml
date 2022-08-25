@@ -3,7 +3,7 @@
 
 username: hadoop
 
-username_SHA512_pass: $6$d..u4EGUjXs6wnyI$E8AplKrVBXIEOEinRU.vUDVWY95Duh5vtXZ8i5cr4iHMQB.zljPdFaz09oxssXASIq0V/j/XS1O2DjmytW6os1
+username_SHA512_pass: $6$i.1Pgpy95InqmdS2$pWzZySdqNcMCv8NuugPTbcFPDeoQPoriDmYqHalP3jZK7bZY9iI1hnH2As.2TqZXNB7iVlAbqQ4/iKow/9iI61
 
 packages:
   - regex_name: java-1.8.0-openjdk-devel

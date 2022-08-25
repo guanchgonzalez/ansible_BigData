@@ -44,7 +44,7 @@
   become_user: "{{ usern }}"
   when: inventory_hostname != 'localhost'
   block:
-  - name: Create user authorized_keys file and grant read permissions to both id_rsa.pub and authorized_keys files
+  - name: Create .ssh user files and set read permissions to both id_rsa.pub and known_hosts files
     file:
       path: "{{ item }}"
       state: touch
@@ -53,7 +53,6 @@
       access_time: preserve
     with_items:
       - "/home/{{ usern }}/.ssh/id_rsa.pub"
-      - "/home/{{ usern }}/.ssh/authorized_keys"
       - "/home/{{ usern }}/.ssh/known_hosts"
 
   - name: Create the .ssh config file
@@ -64,34 +63,59 @@
       group: "{{ usern }}"
       mode: '0644'
 
-  - name: Include user public key into every namenode authorized_keys file
-    delegate_to: "{{ item }}"
-    with_items: "{{ groups['namenode'] }}"
-    lineinfile:
-      path: "/home/{{ usern }}/.ssh/authorized_keys"
-      line: "{{ lookup('file', '/home/{{ usern }}/.ssh/id_rsa.pub') }}"
+- name: Collect remote user pub keys and deploy into authorized_keys files
+  block:
+  - name: Collect the remote user pub keys to a local authorized_keys file
+    become: true
+    become_user: "{{ usern }}"
+    when: inventory_hostname != 'localhost'
+    register: pubkey
+    slurp:
+      src: "/home/{{ usern }}/.ssh/id_rsa.pub"
 
-  - name: Include user public key into every datanode authorized_keys file
-    delegate_to: "{{ item }}"
-    with_items: "{{ groups['datanode'] }}"
-    lineinfile:
-      path: "/home/{{ usern }}/.ssh/authorized_keys"
-      line: '{{ lookup("file", "/home/{{ usern }}/.ssh/id_rsa.pub") }}'
-
-#  - name: Include the user public key into its authorized_keys file
-#    ignore_errors: true
-#    shell: |
-#      encr=$(awk '{print $2}' /home/{{ usern }}/.ssh/id_rsa.pub)
-#      grep ${encr} /home/{{ usern }}/.ssh/authorized_keys
-#      [[ $? -ne 0 ]] && cat /home/{{ usern }}/.ssh/id_rsa.pub >> /home/{{ usern }}/.ssh/authorized_keys
+#  - name: Create local empty authorized_keys file
+#    when: inventory_hostname == 'localhost'
+#    file:
+#      path: "{{ role_path }}/vars/authorized_keys"
+#      state: touch
 #
+  - name: Create common authorized_keys file
+    with_items: "{{ pubkey.content | b64decode }}"
+    when: inventory_hostname != 'localhost'
+    delegate_to: localhost
+    lineinfile:
+      path: "{{ role_path }}/vars/authorized_keys"
+      line: "{{ item }}"
+      create: yes
+
+  - name: Remove empty lines from local authorized_keys file
+    lineinfile:
+      path: "{{ role_path }}/vars/authorized_keys"
+      regexp: '^\s*$'
+      state: absent
+
+  - name: Deploy authorized_keys file to remote nodes
+    become: true
+    when: inventory_hostname != 'localhost'
+    copy:
+      src: "{{ role_path }}/vars/authorized_keys"
+      dest: "/home/{{ usern }}/.ssh/authorized_keys"
+      owner: "{{ usern }}"
+      group: "{{ usern }}"
+      mode: '0644'
+
+  - name: Remove local authorized_keys file
+    file:
+      path: "{{ role_path }}/vars/authorized_keys"
+      state: absent
+
 - name: Enable SSH login to remote users
   become: true
   when: inventory_hostname != 'localhost'
   replace:
     path: /etc/ssh/sshd_config
-    regexp: '^(AllowUsers(?!.*\b{{ user_name }}\b).*)$'
-    replace: '\1 {{ user_name }}'
+    regexp: '^(AllowUsers(?!.*\b{{ usern }}\b).*)$'
+    replace: '\1 {{ usern }}'
     validate: /usr/sbin/sshd -t -f %s
 
 - name: Restart SSH service

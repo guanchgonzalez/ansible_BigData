@@ -1,7 +1,6 @@
 ---
 # Deploy the common Hadoop and HDFS config files thru the entire Hadoop infraestructure
 # Target hosts: namenode, datanode
-# Vars: N/A
 #
 
 - name: Deploy the common Hadoop and HDFS config files for every node

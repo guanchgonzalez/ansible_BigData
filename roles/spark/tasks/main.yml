@@ -3,115 +3,57 @@
 # Target hosts: tdm_master:tdm_worker:local
 #
 
-#- name: Check availability of VM's
-#  copy:
-#    content: "  VM gestionada por los roles/playbooks de Ansible.\n"
-#    dest: /etc/motd
-#  become: true
-#
-#- name: Include the YUM update role
-#  include_role:
-#    name: packages
-#  vars:
-#    packages:
-#      - regex_name: ncdu
-#      - regex_name: epel-release
-#      - regex_name: python38
-#      - regex_name: scala
-#  when: ( group_names | select('match', 'local') | list | length ) == 0
-#
-#- name: Include the Spark user creation role
-#  include_role:
-#    name: user_creation
-#  vars:
-#    username: 'spark'
-#
-#- name: Deploying the Spark master public key around the Spark slaves
-#  block:
-#  - name: Remove previous Spark slaves entries from the Spark master known_hosts file
-#    shell: sed -i "/^{{ item }}.*$/d" /home/spark/.ssh/known_hosts
-#    become: true
-#    become_user: spark
-#    loop: "{{ groups.tdm_worker }}"
-#
-#  - name: Copy the spark public key to every Spark slave
-#    shell: sshpass -p spark ssh-copy-id -i /home/spark/.ssh/id_rsa.pub spark@{{ item }}
-#    become: true
-#    become_user: spark
-#    loop: "{{ groups.tdm_worker }}"
-#
-#  when: ( group_names | select('match', 'tdm_master') | list | length ) > 0
-#
+- name: Include common deployment tasks for Spark infraestructure
+  include_tasks: "{{ playbook_dir }}/common_tasks/main.yml"
+
 - name: Install pyspark library
+  when: inventory_hostname != 'localhost'
   pip:
     name: pyspark
-  when: ( group_names | select('match', 'local') | list | length ) == 0
 
-#- name: Download the latest Spark tarball and set its name as a variable into the role vars file
-#  shell: |
-#    product_version=$(wget -qO- https://archive.apache.org/dist/spark/ | grep 'folder\.gif' | grep '[0-9]\.[0-9]*/<' | sed -e 's/.*href=//' | cut -d'"' -f2 | sort -V | tail -1)
-#    file=$(wget -qO- https://archive.apache.org/dist/spark/${product_version} | grep 'compressed\.gif' | grep -i 'bin-hadoop[1-9\.*]*.tgz"' | sed -e 's/.*href=//' | cut -d'"' -f2 | sort -V | tail -1)
-#    wget -qO /home/ansible/roles/spark/files/${file} https://archive.apache.org/dist/spark/${product_version}${file}
-#    sed -i "s/tarball.*$/tarball: ${file}/" /home/ansible/roles/spark/vars/main.yml
-#  ignore_errors: yes
-#  when: ( group_names | select('match', 'local') | list | length ) > 0
-#
-#- name: Reload vars file
-#  include_vars:
-#    dir: /home/ansible/roles/spark/vars
-#
-#- name: Deploying Spark thru the cluster
-#  block:
-#  - name: Decompress the tarball
-#    unarchive:
-#      src: "{{ tarball }}"
-#      dest: /home/spark
-#      owner: spark
-#      group: spark
-#      mode: '0755'
-#      extra_opts: [--strip-components=1]
-#
-#  - name: Delete the tarball in the Spark cluster servers
-#    file:
-#      path: "/home/spark/{{ tarball }}"
-#      state: absent
-#
-- name: Deploy the Spark framework thru the cluster
+- name: Create the Spark directories and the env file for every node
+  become: true
+  become_user: "{{ username }}"
+  when: inventory_hostname != 'localhost'
   block:
-  - name: Create the local directory
-    file:
-      path: /home/spark/local
-      mode: '0755'
-      state: directory
-
   - name: Create the local subdirectories
-    file:
-      path: "/home/spark/local/{{ item }}"
-      mode: '0755'
-      state: directory
     loop:
       - 'data'
       - 'logs'
       - 'pid'
       - 'worker'
+    file:
+      path: "/home/{{ usern }}/{{ version }}/local/{{ item }}"
+      mode: '0755'
+      state: directory
+
+  - name: Get Memory (in MB) and virtual CPU facts
+    loop:
+      - 'ansible_*_mb'
+      - 'ansible_processor_*'
+    setup:
+      filter: "{{ item }}"
+
+  - name: Show all collected facts
+    debug:
+      var: ansible_facts
 
   - name: Create a copy of the spark-env.sh template
     copy:
-      src: /home/spark/conf/spark-env.sh.template
-      dest: /home/spark/conf/spark-env.sh
+      src: "/home/{{ usern }}/{{ version }}/conf/spark-env.sh.template"
+      dest: "/home/{{ usern }}/{{ version }}/conf/spark-env.sh"
       remote_src: yes
 
   - name: Fill the spark-env.sh file
     blockinfile:
-      path: /home/spark/conf/spark-env.sh
+      path: "/home/{{ usern }}/{{ version }}/conf/spark-env.sh"
       mode: '0755'
-      insertafter: EOF
-      marker: "# {mark} ANSIBLE MANAGED BLOCK"
+      marker: "# {mark} ENV SPARK BLOCK"
       block: |
         export SPARK_LOCAL_HOSTNAME={{ inventory_hostname }}
         export SPARK_MASTER_HOST={{ groups.tdm_master | first }}
         export SPARK_WORKER_INSTANCES=1
-        export SPARK_WORKER_CORES={{ 1 if ( ( ansible_processor_cores * ansible_processor_threads_per_core ) < 2 ) else ( ansible_processor_cores * ansible_processor_threads_per_core / 2 ) | int }}
+        export SPARK_WORKER_CORES={{ 1 if ( ansible_processor_vcpus < 3 ) else ( ( ansible_processor_vcpus / 2 ) | int ) }}
         export SPARK_WORKER_MEMORY={{ ( ansible_memtotal_mb / 2 ) | int }}m
         export SPARK_CONF_DIR=${SPARK_HOME}/conf
         export SPARK_WORKER_DIR=${SPARK_HOME}/local/worker
@@ -125,31 +67,29 @@
         export PYTHONPATH=${SPARK_HOME}/python/lib/pyspark.zip:${PYTHONPATH}
         export PATH=${SPARK_HOME}/python:${PATH}
 
-  become: true
-  become_user: spark
-  when: ( group_names | select('match', 'local') | list | length ) == 0
-
 - name: Spark master tasks
+  become: true
+  become_user: "{{ username }}"
+  when: inventory_hostname in groups['tdm_master']
   block:
   - name: Create a copy of the spark-defaults.conf template
     copy:
-      src: /home/spark/conf/spark-defaults.conf.template
-      dest: /home/spark/conf/spark-defaults.conf
+      src: "/home/{{ usern }}/{{ version }}/conf/spark-defaults.conf.template"
+      dest: "/home/{{ usern }}/{{ version }}/spark-defaults.conf"
       remote_src: yes
 
   - name: Fill the spark-defaults.conf file
     blockinfile:
-      path: /home/spark/conf/spark-defaults.conf
+      path: "/home/{{ usern }}/{{ version }}/conf/spark-defaults.conf"
       mode: '0755'
-      insertafter: EOF
-      marker: "# {mark} ANSIBLE MANAGED BLOCK"
+      marker: "# {mark} SPARK CONF BLOCK"
       block: |
         spark.ui.port 8082
         spark.master spark://0.0.0.0:7077
-        spark.driver.cores {{ 1 if ( ( ansible_processor_cores * ansible_processor_threads_per_core ) < 2 ) else ( ansible_processor_cores * ansible_processor_threads_per_core / 2 ) | int }}
+        spark.driver.cores {{ 1 if ( ansible_processor_vcpus < 3 ) else ( ( ansible_processor_vcpus / 2 ) | int ) }}
         spark.driver.memory {{ ( ansible_memtotal_mb / 2 ) | int }}m
         spark.driver.maxResultSize 0
-        spark.executor.cores {{ 1 if ( ( ansible_processor_cores * ansible_processor_threads_per_core ) < 2 ) else ( ansible_processor_cores * ansible_processor_threads_per_core / 4 ) | int }}
+        spark.executor.cores {{ 1 if ( ansible_processor_vcpus < 3 ) else ( ( ansible_processor_vcpus / 4 ) | int ) }}
         spark.executor.memory {{ ( ansible_memtotal_mb / 4 ) | int }}m
         spark.serializer org.apache.spark.serializer.KryoSerializer
         spark.rdd.compress true
@@ -163,45 +103,35 @@
 
   - name: Create a copy of the slaves template
     copy:
-      src: /home/spark/conf/slaves.template
-      dest: /home/spark/conf/slaves
+      src: "/home/{{ usern }}/{{ version }}/conf/slaves.template"
+      dest: "/home/{{ usern }}/{{ version }}/conf/slaves"
       remote_src: yes
 
   - name: Remove localhost line from the slaves file
     lineinfile:
-      path: /home/spark/conf/slaves
+      path: "/home/{{ usern }}/{{ version }}/conf/slaves"
       regexp: '^localhost'
       state: absent
 
   - name: Fill the slaves file
+    loop: "{{ groups.tdm_worker }}"
     lineinfile:
-      path: /home/spark/conf/slaves
+      path: "/home/{{ usern }}/{{ version }}/conf/slaves"
       line: "{{ item }}"
       mode: '0644'
-    loop: "{{ groups.tdm_worker }}"
 
   - name: Deploy the Python scripts
-    copy:
-      src: "{{ item }}"
-      dest: /home/spark/examples/src/main/python/
-      owner: spark
-      group: spark
-      mode: '0755'
-    with_items:
+    loop:
       - 'TDM_P2_anexo_1_Pi.py'
       - 'TDM_P2_anexo_2_WordCount.py'
+    copy:
+      src: "{{ item }}"
+      dest: "/home/{{ usern }}/{{ version }}/examples/src/main/python/"
+      owner: "{{ usern }}"
+      group: "{{ usern }}"
+      mode: '0755'
 
   - name: Start the Spark cluster
-    command: /home/spark/sbin/start-all.sh
+    command: "/home/{{ usern }}/{{ version }}/sbin/start-all.sh"
 
-  become: true
-  become_user: spark
-  when: ( group_names | select('match', 'tdm_master') | list | length ) > 0
-
-#- name: Delete the tarball from the Ansible server
-#  file:
-#    path: "/home/ansible/roles/spark/files/{{ tarball }}"
-#    state: absent
-#  when: ( group_names | select('match', 'local') | list | length ) > 0
-#
 ...

@@ -1,0 +1,15 @@
+---
+# Apply the specific filter to get the Kafka tarball files list
+# Target: localhost
+
+- name: Discard non needed tarballs
+  replace:
+    path: "{{ role_path }}/files/content"
+    regexp: "^{{ username }}\\-[0-9a-zA-Z\\.\\-]*$"
+
+- name: Discard other non needed tarballs
+  replace:
+    path: "{{ role_path }}/files/content"
+    regexp: "^{{ username }}_[0-9a-zA-Z\\.]*\\-[0-9a-zA-Z\\.]*\\-[0-9a-zA-Z\\.\\-]*$"
+
+...

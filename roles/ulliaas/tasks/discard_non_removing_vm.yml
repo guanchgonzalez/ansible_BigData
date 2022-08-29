@@ -1,0 +1,26 @@
+---
+# Discard VM's that shouldn't be removed
+# Target hosts: worker
+
+- name: Erase previous remove_vm file
+  file:
+    path: "{{ playbook_dir }}/remove_vm"
+    state: absent
+
+- name: Create remove_vm file
+  loop: "{{ removing }}"
+  lineinfile:
+    path: "{{ playbook_dir }}/remove_vm"
+    line: "{{ prefix }}{{ item.node_sufix }}.{{ subnet }}.local"
+    create: yes
+
+- name: Discard non mentioned servers
+  check_mode: yes
+  register: presence
+  failed_when: presence.changed
+  lineinfile:
+    path: "{{ playbook_dir }}/remove_vm"
+    line: "{{ inventory_hostname }}"
+    state: present
+
+...

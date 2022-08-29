@@ -13,8 +13,8 @@ subnet: workers
 
 # VM HW resources assignment
 
-cores: 16
-mem: 16
+cores: 4
+mem: 4
 
 # VM networks
 

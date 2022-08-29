@@ -1,0 +1,10 @@
+---
+# Apply the specific filter to get the Kafka versions list
+# Target: localhost
+
+- name: Discard alternative subversions
+  replace:
+    path: "{{ role_path }}/files/content"
+    regexp: "^[0-9\\.]*\\-[a-zA-Z0-9]*$"
+
+...

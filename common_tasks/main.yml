@@ -2,7 +2,6 @@
 # Launch the common tasks on every cluster node.
 # This is the common base for every technology framework (role).
 # Target hosts: worker
-# Vars: username
 #
 
 - name: Check availability of VM's
@@ -16,17 +15,11 @@
 
 - name: Include the DNF update role
   include_tasks: "{{ playbook_dir }}/common_tasks/packages.yml"
-  vars:
-    packs: "{{ packages }}"
 
 - name: Include the technology own user creation role
   include_tasks: "{{ playbook_dir }}/common_tasks/user_creation.yml"
-  vars:
-    usern: "{{ username }}"
 
 - name: Include the technology latest tarball deployment role
   include_tasks: "{{ playbook_dir }}/common_tasks/tarball_deploy.yml"
-  vars:
-    usern: "{{ username }}"
 
 ...

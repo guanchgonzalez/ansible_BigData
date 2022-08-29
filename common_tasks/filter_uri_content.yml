@@ -1,0 +1,48 @@
+---
+# Get the URI and find the required version or tarball file
+# Target: localhost
+
+- name: Get URI content
+  register: uri_content
+  uri:
+    url: "https://archive.apache.org/dist/{{ suburi }}/"
+    return_content: yes
+
+- name: Create content file
+  copy:
+    content: "{{ uri_content.content | regex_findall('<img src=\"/icons/[a-z=\"\\. ]*\\[DIR\\]\"> <a href=\"[a-z0-9\\-\\.]*/\">[a-z0-9\\-\\.]*/</a>') | sort(reverse=True) | join('\n') }}"
+    dest: "{{ role_path }}/files/content"
+
+- name: Remove <img> tag
+  replace:
+    path: "{{ role_path }}/files/content"
+    regexp: '^<img.*> <a href=.*">'
+
+- name: Remove </a> tag
+  replace:
+    path: "{{ role_path }}/files/content"
+    regexp: '([/]</a>)'
+
+- name: Include framework filter
+  include_tasks: "{{ role_path }}/tasks/{{ filter_type }}"
+
+- name: Remove blank lines
+  lineinfile:
+    path: "{{ role_path }}/files/content"
+    regexp: '^$'
+    state: absent
+
+- name: Get version
+  set_fact:
+    res: "{{ lookup('file', '{{ role_path }}/files/content').splitlines()[0] }}"
+
+- name: Show version
+  debug:
+    var: res
+
+- name: Remove content file
+  file:
+    path: "{{ role_path }}/files/content"
+    state: absent
+
+...

@@ -1,7 +1,6 @@
 ---
 # Create the data directories and the master and slaves/workers config files thru the entire Hadoop infraestructure
 # Target hosts: namenode, datanode
-# Vars: N/A
 #
 
 - name: Create the Hadoop and HDFS data directories for every node

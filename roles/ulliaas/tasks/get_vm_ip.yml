@@ -2,18 +2,30 @@
 # Get the VM IP's from worker nodes
 # Target hosts: worker
 
-- name: Get the VM network facts
+- name: Get facts
   setup:
     gather_subset: network
-  register: netvalues
 
 - name: Show variable
   debug:
-    var: netvalues
+    var: ansible_facts.ens4.ipv4.address
 
-- name: Register the VM IP
-  debug:
-    var: netvalues['ens4']['ipv4']['address']
-  register: netvars
+- name: Save the IP facts into remote temp files
+  copy:
+    content: "  - {{ ansible_facts.ens4.ipv4.address }}"
+    dest: '/home/ansible/ip.workers.tmp'
+
+- name: Collect the remote temp files
+  register: vm_ip
+  slurp:
+    src: '/home/ansible/ip.workers.tmp'
+
+- name: Get ips to local var file
+  with_items: "{{ vm_ip.content | b64decode }}"
+  delegate_to: localhost
+  lineinfile:
+    path: "{{ role_path }}/vars/vm_ips.yml"
+    insertafter: '^vm_ips:$'
+    line: "{{ item }}"
 
 ...

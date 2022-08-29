@@ -1,7 +1,6 @@
 ---
 # Deploy the MapReduce config file thru the entire Hadoop infraestructure
 # Target hosts: namenode, datanode
-# Vars: N/A
 #
 
 - name: Deploy the MapReduce config file for every node

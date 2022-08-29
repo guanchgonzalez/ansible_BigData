@@ -3,10 +3,12 @@
 
 username: hadoop
 
-username_SHA512_pass: $6$i.1Pgpy95InqmdS2$pWzZySdqNcMCv8NuugPTbcFPDeoQPoriDmYqHalP3jZK7bZY9iI1hnH2As.2TqZXNB7iVlAbqQ4/iKow/9iI61
+username_SHA512_pass: $6$S9fEwPkppmBoqlm6$E94TKZbP2miLBeaqpSkokCAwwnAbCfZhMlfxhAWoDhVoT6tfS48jV0DZJsU4j2CiWwHwovxsUqTyxMo6lsFfb.
 
 packages:
   - regex_name: java-1.8.0-openjdk-devel
+
+suburi: 'hadoop/core'
 
 version: hadoop-2.10.2
 

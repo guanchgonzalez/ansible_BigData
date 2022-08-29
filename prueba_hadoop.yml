@@ -1,0 +1,110 @@
+---
+
+- name: Probando tareas Hadoop
+  hosts: local
+  gather_facts: false
+  vars:
+    - usern: 'hadoop'
+    - suburi: 'hadoop/core'
+  tasks:
+  - name: Get versions URI
+    register: v_uri
+    uri:
+      url: "https://archive.apache.org/dist/{{ suburi }}/"
+      return_content: yes
+
+  - name: Create versions content file
+    copy:
+      content: "{{ v_uri.content | regex_findall('<img src=\"/icons/folder\\.gif\" alt=\"\\[DIR\\]\"> <a href=\"[a-z0-9\\-\\.]*/\">[a-z0-9\\-\\.]*/</a>') | sort(reverse=True) | join('\n') }}"
+      dest: "/home/ansible/roles/{{ usern }}/files/v_content"
+
+  - name: Remove <img> tag
+    replace:
+      path: "/home/ansible/roles/{{ usern }}/files/v_content"
+      regexp: '^<img.*> <a href=.*">'
+
+  - name: Remove </a> tag
+    replace:
+      path: "/home/ansible/roles/{{ usern }}/files/v_content"
+      regexp: '(/</a>)'
+      replace: ''
+
+  - name: Discard alternative versions
+    replace:
+      path: "/home/ansible/roles/{{ usern }}/files/v_content"
+      regexp: "^(?!{{ usern }}).*$"
+ 
+  - name: Discard alternatives subversions
+    replace:
+      path: "/home/ansible/roles/{{ usern }}/files/v_content"
+      regexp: "^{{ usern }}-[0-9\\.]*-[a-zA-Z0-9]*$"
+
+  - name: Remove blank lines
+    lineinfile:
+      path: "/home/ansible/roles/{{ usern }}/files/v_content"
+      regexp: '^$'
+      state: absent
+
+  - name: Get version
+    set_fact:
+      version: "{{ lookup('file', '/home/ansible/roles/{{ usern }}/files/v_content').splitlines()[0] }}"
+
+  - name: Show version
+    debug:
+      var: version
+
+  - name: Get last version URI
+    register: f_uri
+    uri:
+      url: "https://archive.apache.org/dist/{{ suburi }}/{{ version }}"
+      return_content: yes
+
+  - name: Create files content file
+    copy:
+      content: "{{ f_uri.content | regex_findall('<img src=\"/icons/compressed\\.gif\" alt=\"\\[ *\\]\"> <a href=\"[a-zA-Z0-9_\\-\\.]*\">[a-zA-Z0-9_\\-\\.]*</a>') | sort(reverse=True) | join('\n') }}"
+      dest: "/home/ansible/roles/{{ usern }}/files/f_content"
+
+  - name: Remove <img> tag
+    replace:
+      path: "/home/ansible/roles/{{ usern }}/files/f_content"
+      regexp: '^<img.*> <a href=.*">'
+
+  - name: Remove </a> tag
+    replace:
+      path: "/home/ansible/roles/{{ usern }}/files/f_content"
+      regexp: '(</a>)'
+      replace: ''
+
+  - name: Discard non-tarballs
+    replace:
+      path: "/home/ansible/roles/{{ usern }}/files/f_content"
+      regexp: "^{{ usern }}\\-[0-9\\.]*\\-[0-9a-zA-Z\\.]*$"
+ 
+  - name: Remove blank lines
+    lineinfile:
+      path: "/home/ansible/roles/{{ usern }}/files/v_content"
+      regexp: '^$'
+      state: absent
+ 
+  - name: Get tarball file name
+    set_fact:
+      file: "{{ lookup('file', '/home/ansible/roles/{{ usern }}/files/f_content').splitlines()[0] }}"
+ 
+  - name: Show tarball file name
+    debug:
+      var: file
+
+  - name: Download tarball
+    get_url:
+      url: "https://archive.apache.org/dist/{{ suburi }}/{{ version }}/{{ file }}"
+      dest: "/home/ansible/roles/{{ usern }}/files/{{ file }}"
+
+  - name: Remove content files
+    loop:
+      - "/home/ansible/roles/{{ usern }}/files/v_content"
+      - "/home/ansible/roles/{{ usern }}/files/f_content"
+    file:
+      path: "{{ item }}"
+      state: absent
+
+...

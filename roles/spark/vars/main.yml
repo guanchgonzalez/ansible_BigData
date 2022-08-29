@@ -3,15 +3,17 @@
 
 username: spark
 
-username_SHA512_pass: spark
+username_SHA512_pass: $6$obTjyES95RkBQVcJ$HYVscO22ErbdopUGmldgqYULZ7LTeDdt5ypVeLxu1lPGhNHJ9WaTo2R9fNXLXgivYP2zgvt6D6tWoA2RpOl671
 
 packages:
   - regex_name: ncdu
   - regex_name: python38
   - regex_name: scala
 
+suburi: spark
+
 version: spark
 
-tarball: spark
+file: spark
 
 ...

@@ -1,7 +1,6 @@
 ---
 # Deploy the YARN config file thru the entire Hadoop infraestructure
 # Target hosts: namenode, datanode
-# Vars: N/A
 #
 
 - name: Deploy the YARN config file for every node

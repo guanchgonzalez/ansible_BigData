@@ -1,7 +1,4 @@
 ---
-# IP's to be released in DHCP-DNS server.
-
 vm_ips:
-# End of vm_ip list
-
+  - 192.168.212.38
 ...

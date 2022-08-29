@@ -1,0 +1,38 @@
+---
+# Tarball download or the technology given by its username.
+# Target hosts: localhost
+
+- name: Download the latest tarball
+  when: inventory_hostname == 'localhost'
+  block:
+  - name: Get the latest version
+    include_tasks: "{{ playbook_dir }}/common_tasks/filter_uri_content.yml"
+    vars:
+      - suburi: "{{ version_suburi }}"
+      - filter_type: 'versions'
+
+  - name: Save the tarball version as a variable
+    replace:
+      path: "{{ role_path }}/vars/main.yml"
+      regexp: '^version: (.*)$'
+      replace: "version: {{ res }}"
+
+  - name: Reload vars file
+    include_vars: "{{ role_path }}/vars/main.yml"
+
+  - name: Get the required file
+    include_tasks: "{{ playbook_dir }}/common_tasks/filter_uri_content.yml"
+    vars:
+      - suburi: "{{ version_suburi }}{{ version }}"
+      - filter_type: 'files'
+
+  - name: Save the tarball version as a variable
+    replace:
+      path: "{{ role_path }}/vars/main.yml"
+      regexp: '^file: (.*)$'
+      replace: "file: {{ res }}"
+
+  - name: Reload vars file
+    include_vars: "{{ role_path }}/vars/main.yml"
+
+...

@@ -1,4 +1,5 @@
 ---
+# Logout from ULL IaaS
 # Target hosts: local
 
 - name: Cleanup IaaS auth token

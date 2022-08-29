@@ -2,27 +2,19 @@
 # Remove a VM either in management or workers subnet, to be a master or a worker node.
 # Target hosts: local
 
-- name: Stop VM's
-  ovirt_vm:
-    auth: "{{ ovirt_auth }}"
-    name: "{{ prefix }}{{ item.node_sufix }}"
-    state: stopped
-    timeout: 360
-  with_items: "{{ removing }}"
-  
 - name: Remove VM's
+  loop: "{{ removing }}"
   ovirt_vm:
     auth: "{{ ovirt_auth }}"
     name: "{{ prefix }}{{ item.node_sufix }}"
     state: absent
     timeout: 360
-  with_items: "{{ removing }}"
 
 - name: Clean known_hosts file
+  loop: "{{ removing }}"
   lineinfile:
     path: /home/ansible/.ssh/known_hosts
     regexp: '{{ prefix }}{{ item.node_sufix }}.*'
     state: absent
-  with_items: "{{ removing }}"
 
 ...

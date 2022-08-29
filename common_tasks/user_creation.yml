@@ -1,7 +1,6 @@
 ---
 # User and its environment creation tasks.
 # Target hosts: N/A
-# Vars: usern
 #
 
 - name: Generate a new encrypted user password
@@ -9,7 +8,7 @@
   when: inventory_hostname in groups['local']
   block:
   - name: Encrypt user password with openssl
-    shell: echo {{ usern }} | openssl passwd -6 -stdin
+    shell: echo {{ username }} | openssl passwd -6 -stdin
     register: uspass
 
   - name: Save the new encrypted password as a variable
@@ -29,19 +28,19 @@
   block:
   - name: Create user group
     group:
-      name: "{{ usern }}"
+      name: "{{ username }}"
       state: present
 
   - name: Create user with the same password
     user:
-      name: "{{ usern }}"
-      group: "{{ usern }}"
+      name: "{{ username }}"
+      group: "{{ username }}"
       password: "{{ username_SHA512_pass }}"
       generate_ssh_key: yes
 
 - name: Deploy SSH keys relationships on every cluster node
   become: true
-  become_user: "{{ usern }}"
+  become_user: "{{ username }}"
   when: inventory_hostname != 'localhost'
   block:
   - name: Create .ssh user files and set read permissions to both id_rsa.pub and known_hosts files
@@ -52,33 +51,27 @@
       modification_time: preserve
       access_time: preserve
     with_items:
-      - "/home/{{ usern }}/.ssh/id_rsa.pub"
-      - "/home/{{ usern }}/.ssh/known_hosts"
+      - "/home/{{ username }}/.ssh/id_rsa.pub"
+      - "/home/{{ username }}/.ssh/known_hosts"
 
   - name: Create the .ssh config file
     copy:
-      dest: "/home/{{ usern }}/.ssh/config"
+      dest: "/home/{{ username }}/.ssh/config"
       content: StrictHostKeyChecking no
-      owner: "{{ usern }}"
-      group: "{{ usern }}"
+      owner: "{{ username }}"
+      group: "{{ username }}"
       mode: '0644'
 
 - name: Collect remote user pub keys and deploy into authorized_keys files
   block:
   - name: Collect the remote user pub keys to a local authorized_keys file
     become: true
-    become_user: "{{ usern }}"
+    become_user: "{{ username }}"
     when: inventory_hostname != 'localhost'
     register: pubkey
     slurp:
-      src: "/home/{{ usern }}/.ssh/id_rsa.pub"
+      src: "/home/{{ username }}/.ssh/id_rsa.pub"
 
-#  - name: Create local empty authorized_keys file
-#    when: inventory_hostname == 'localhost'
-#    file:
-#      path: "{{ role_path }}/vars/authorized_keys"
-#      state: touch
-#
   - name: Create common authorized_keys file
     with_items: "{{ pubkey.content | b64decode }}"
     when: inventory_hostname != 'localhost'
@@ -99,9 +92,9 @@
     when: inventory_hostname != 'localhost'
     copy:
       src: "{{ role_path }}/vars/authorized_keys"
-      dest: "/home/{{ usern }}/.ssh/authorized_keys"
-      owner: "{{ usern }}"
-      group: "{{ usern }}"
+      dest: "/home/{{ username }}/.ssh/authorized_keys"
+      owner: "{{ username }}"
+      group: "{{ username }}"
       mode: '0644'
 
   - name: Remove local authorized_keys file
@@ -114,8 +107,8 @@
   when: inventory_hostname != 'localhost'
   replace:
     path: /etc/ssh/sshd_config
-    regexp: '^(AllowUsers(?!.*\b{{ usern }}\b).*)$'
-    replace: '\1 {{ usern }}'
+    regexp: '^(AllowUsers(?!.*\b{{ username }}\b).*)$'
+    replace: '\1 {{ username }}'
     validate: /usr/sbin/sshd -t -f %s
 
 - name: Restart SSH service
@@ -129,22 +122,22 @@
   become: true
   when: inventory_hostname != 'localhost'
   copy:
-    dest: /etc/profile.d/{{ usern }}.sh
+    dest: /etc/profile.d/{{ username }}.sh
     owner: root
     group: root
     mode: '0644'
     content: |
-      export {{ usern | upper }}_HOME=/home/{{ usern }}
-      export PATH={{ '${' }}{{ usern | upper }}_HOME{{ '}' }}/VERSION/bin{{ ':${' }}{{ usern | upper }}_HOME{{ '}' }}/VERSION/sbin{{ ':${' }}{{ usern | upper }}_HOME{{ '}/bin:${' }}PATH{{ '}' }}
+      export {{ username | upper }}_HOME=/home/{{ username }}
+      export PATH={{ '${' }}{{ username | upper }}_HOME{{ '}' }}/VERSION/bin{{ ':${' }}{{ username | upper }}_HOME{{ '}' }}/VERSION/sbin{{ ':${' }}{{ username | upper }}_HOME{{ '}/bin:${' }}PATH{{ '}' }}
 
 - name: Create the /var/log subdir for the deployed service
   become: true
   when: inventory_hostname != 'localhost'
   file:
-    path: "/var/log/{{ usern }}"
+    path: "/var/log/{{ username }}"
     state: directory
-    owner: "{{ usern }}"
-    group: "{{ usern }}"
+    owner: "{{ username }}"
+    group: "{{ username }}"
     mode: '0755'
 
 ...

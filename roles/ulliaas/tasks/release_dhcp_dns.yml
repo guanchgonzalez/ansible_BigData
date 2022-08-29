@@ -2,40 +2,45 @@
 # Release the VM IP's from the DHCP-DNS server
 # Target hosts: dhcp
 
-- name: Clean the IP entry in the DHCP
+- name: Release the VM IP's from the DHCP and DNS services
   become: true
-  replace:
-    path: /var/lib/dhcpd/dhcpd.leases
-    regexp: '(lease {{ vm_ips }} {[\s\S]*)}'
-    replace: ''
+  block:
+  - name: Clean the IP entry in the DHCP
+    loop: "{{ vm_ips }}"
+    replace:
+      path: /var/lib/dhcpd/dhcpd.leases
+      regexp: '(lease {{ item }} {[\s\S]*)}'
+      replace: ''
 
-- name: Remove the worker IP from workers.local.db
-  become: true
-  replace:
-    path: /var/named/workers.local.db
-    regexp: '(.*){{ vm_ips }}\n[^\n]+'
-    replace: ''
+  - name: Remove the worker IP from workers.local.db
+    loop: "{{ vm_ips }}"
+    replace:
+      path: /var/named/workers.local.db
+      regexp: '(.*){{ item }}\n[^\n]+'
+      replace: ''
 
-- name: Remove empty lines from workers.local.db
-  become: true
-  lineinfile:
-    path: /var/named/workers.local.db
-    regexp: '^$'
-    state: absent
+  - name: Remove empty lines from workers.local.db
+    lineinfile:
+      path: /var/named/workers.local.db
+      regexp: '^$'
+      state: absent
 
-- name: Remove the worker hostname from workers.local.rev
-  become: true
-  lineinfile:
-    path: /var/named/workers.local.rev
-    regexp: '(.*){{ item.node_sufix }}\.workers\.local\.'
-    state: absent
-  with_items: "{{ removing }}"
+  - name: Remove the worker hostname from workers.local.rev
+    loop: "{{ removing }}"
+    lineinfile:
+      path: /var/named/workers.local.rev
+      regexp: '(.*){{ item.node_sufix }}\.workers\.local\.'
+      state: absent
 
-- name: Remove DNS jnl files
-  become: true
-  file:
-    path: /var/named/workers.local.*.jnl
-    state: absent
-  notify: restart_services
+  - name: Remove DNS jnl files
+    file:
+      path: /var/named/workers.local.*.jnl
+      state: absent
+
+  - name: Restart services
+    loop: "{{ services }}"
+    service:
+      name: "{{ item }}"
+      state: restarted
 
 ...

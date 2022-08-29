@@ -8,10 +8,11 @@
   include_tasks: login.yml
 
 - name: Include nodes vars files
-  include_vars: "{{ item }}"
-  with_items:
-    - creating.yml
-    - removing.yml
+  loop:
+    - creation.yml
+    - removal.yml
+  include_vars:
+    file: "{{ role_path }}/vars/{{ item }}"
 
 - name: Create the VM's
   when:
@@ -19,97 +20,50 @@
     - inventory_hostname in groups['local']
   include_tasks: create_vm.yml
 
-#- name: Include removing and vm_ips vars files
-#  when:
-#    - creating is none
-#    - inventory_hostname in groups['local']
-#    - inventory_hostname in groups['worker']
-#  include_vars: "{{ item }}"
-#  with_items:
-#    - removing.yml
-#    - vm_ips.yml
-#
+- name: Create local var file
+  when:
+    - creating is none
+    - inventory_hostname == 'localhost'
+  copy:
+    dest: "{{ role_path }}/vars/vm_ips.yml"
+    content: |
+      ---
+      vm_ips:
+      ...
+
+- name: Discard workers that shouldn't be removed
+  when:
+    - creating is none
+    - inventory_hostname in groups['worker']
+  include_tasks: discard_non_removing_vm.yml
+
 - name: Get the VM IP's from worker nodes
-  when: inventory_hostname in groups['worker']
-  setup:
-    gather_subset: network
-#  delegate_facts: true
-#  delegate_to: localhost
-
-- name: Set an empty list fact
   when:
     - creating is none
     - inventory_hostname in groups['worker']
-  set_fact:
-    cacheable: yes
-    ip_list: ""
+  include_tasks: get_vm_ip.yml
 
-- name: Show variable
-  when:
-    - creating is none
-    - inventory_hostname in groups['worker']
-  debug:
-    var: ansible_facts.ens4.ipv4.address
-
-- name: Set the worker facts
-  when:
-    - creating is none
-    - inventory_hostname in groups['worker']
-  set_fact:
-    cacheable: yes
-    ip_list: "{{ ansible_facts.ens4.ipv4.address + ',' + ip_list }}"
-  delegate_facts: true
-  delegate_to: localhost
-
-#- name: Show cached variables
-#  when:
-#    - creating is none
-#    - inventory_hostname in groups['worker']
-#  debug:
-#    var: ip_list
-#
-#- name: Set the VM IP's into the vars file
-#  when:
-#    - creating is none
-#    - inventory_hostname in groups['local']
-#  include_tasks: set_vm_ip.yml
-#  vars:
-#    ip: "{{ ip_list | list | join }}"
-#
 - name: Stop and remove VM's from ULL IaaS
   when:
     - creating is none
-    - inventory_hostname in groups['local']
+    - inventory_hostname == 'localhost'
   include_tasks: remove_vm.yml
 
-- name: Include removing and vm_ips vars files
+- name: Include vm_ips vars files
   when:
     - creating is none
-    - inventory_hostname in groups['local'] or inventory_hostname in groups['dhcp']
-  include_vars: "{{ item }}"
-  with_items:
-    - removing.yml
-    - vm_ips.yml
+    - inventory_hostname in groups['dhcp']
+  include_vars:
+    file: "{{ role_path }}/vars/vm_ips.yml"
 
-#- name: Release the VM IP's from the DHCP-DNS server
-#  when:
-#    - creating is none
-#    - inventory_hostname in groups['local']
-#    - inventory_hostname in groups['dhcp']
-#  include_tasks: release_dhcp_dns.yml
-#
-#- name: Remove erased VM IPs from variables file
-#  when:
-#    - creating is none
-#    - inventory_hostname in groups['local']
-#  replace:
-#    path: /home/ansible/roles/ulliaas/vars/vm_ips.yml
-#    after: 'vm_ips:'
-#    regexp: '(^\s*$)'
-#    replace: ''
-#
-#- name: Logout from ULL IaaS
-#  when: inventory_hostname in groups['local']
-#  include_tasks: logout.yml
-#
+- name: Release the VM IP's from the DHCP-DNS server
+  when:
+    - creating is none
+    - inventory_hostname in groups['dhcp']
+  include_tasks: release_dhcp_dns.yml
+
+- name: Logout from ULL IaaS
+  when: inventory_hostname in groups['local']
+  include_tasks: logout.yml
+
 ...

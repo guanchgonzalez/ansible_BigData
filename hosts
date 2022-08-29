@@ -9,9 +9,8 @@ tfm-alu0101371061-master.management.local ansible_connection=local ansible_pytho
 
 [worker]
 #id-tdm-rgl-wn0[1:7].workers.local
-#tfm-alu0101371061-wn0[1:9].workers.local
+tfm-alu0101371061-wn0[1:6].workers.local
 #tfm-alu0101371061-wn10.workers.local
-tfm-alu0101371061-wn0[1:2].workers.local
 
 [dhcp]
 #tfm-alu0101371061-dhcp.management.local
@@ -23,7 +22,7 @@ tfm-alu0101371061-wn01.workers.local
 
 [datanode]
 #id-tdm-rgl-wn0[1:3].workers.local
-tfm-alu0101371061-wn02.workers.local
+tfm-alu0101371061-wn0[2:6].workers.local
 
 [tdm_master]
 #id-tdm-rgl-wn05.workers.local
@@ -31,5 +30,5 @@ tfm-alu0101371061-wn01.workers.local
 
 [tdm_worker]
 #id-tdm-rgl-wn0[6:7].workers.local
-tfm-alu0101371061-wn02.workers.local
+tfm-alu0101371061-wn0[2:6].workers.local
 

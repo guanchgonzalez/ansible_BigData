@@ -1,7 +1,6 @@
 ---
 # Dnf tasks (to be included into other role plays).
 # Target hosts: N/A
-# Vars: every RPM needed by the parent role
 #
 
 - name: Execute all the Dnf actions
@@ -15,10 +14,10 @@
       state: latest
 
   - name: Install per parent role additional packages
+    loop: "{{ packages }}"
     dnf:
       name: "{{ item.regex_name }}"
       state: latest
-    with_items: "{{ packs }}"
 
   - name: Dnf autoremove
     dnf:

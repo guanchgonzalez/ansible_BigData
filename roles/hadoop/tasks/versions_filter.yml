@@ -1,0 +1,15 @@
+---
+# Apply the specific filter to get the Hadoop versions list
+# Target: localhost
+
+- name: Discard alternative versions
+  replace:
+    path: "{{ role_path }}/files/content"
+    regexp: "^(?!{{ username }}).*$"
+
+- name: Discard alternatives subversions
+  replace:
+    path: "{{ role_path }}/files/content"
+    regexp: "^{{ username }}-[0-9\\.]*\\-[a-zA-Z0-9]*$"
+
+...

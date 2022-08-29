@@ -3,20 +3,22 @@
 # Target hosts: local
 
 - name: Create a VM
+  loop: "{{ creating }}"
   ovirt_vm:
     auth: "{{ ovirt_auth }}"
     cluster: Cluster-Rojo
     name: "{{ prefix }}{{ item.node_sufix }}"
     cpu_cores: "{{ cores }}"
     cpu_sockets: 1
+    cpu_threads: 1
     memory: "{{ mem }}GiB"
     template: centos-8-cloudinit
     nics: "{{ node_nics }}"
     state: present
     wait: yes
-  with_items: "{{ creating }}"
 
 - name: Update VM via cloud-init
+  loop: "{{ creating }}"
   ovirt_vm:
     auth: "{{ ovirt_auth }}"
     name: "{{ prefix }}{{ item.node_sufix }}"
@@ -55,6 +57,5 @@
           - ifdown ens3
           - ifup ens3
     wait: yes
-  with_items: "{{ creating }}"
 
 ...

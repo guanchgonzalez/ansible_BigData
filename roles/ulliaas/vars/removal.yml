@@ -17,7 +17,7 @@ removing:
 # Services to be restarted
 
 services:
-  - httpd
+  - dhcpd
   - named
 
 ...

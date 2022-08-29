@@ -1,16 +1,14 @@
 $ORIGIN .
 $TTL 86400	; 1 day
-212.168.192.in-addr.arpa IN SOA	tfm-alu0101371061-dhcp.212.168.192.in-addr.arpa. root.212.168.192.in-addr.arpa. (
-				400003     ; serial
-				900        ; refresh (15 minutes)
-				1800       ; retry (30 minutes)
-				604800     ; expire (1 week)
-				86400      ; minimum (1 day)
-				)
-			NS	tfm-alu0101371061-dhcp.212.168.192.in-addr.arpa.
+212.168.192.in-addr.arpa	IN SOA	tfm-alu0101371061-dhcp.212.168.192.in-addr.arpa. root.212.168.192.in-addr.arpa. (
+					400003     ; serial
+					900        ; refresh (15 minutes)
+					1800       ; retry (30 minutes)
+					604800     ; expire (1 week)
+					86400      ; minimum (1 day)
+					)
+				NS	tfm-alu0101371061-dhcp.212.168.192.in-addr.arpa.
 $ORIGIN 212.168.192.in-addr.arpa.
-1			PTR	tfm-alu0101371061-router
-31			PTR	tfm-alu0101371061-master
-$TTL 3600	; 1 hour
-$TTL 86400	; 1 day
-tfm-alu0101371061-dhcp	A	192.168.211.5
+1				PTR	tfm-alu0101371061-router
+31				PTR	tfm-alu0101371061-master
+tfm-alu0101371061-dhcp		A	192.168.211.5

@@ -1,16 +1,15 @@
 $ORIGIN .
 $TTL 86400	; 1 day
-workers.local		IN SOA	tfm-alu0101371061-dhcp.workers.local. root.workers.local. (
-				300003     ; serial
-				900        ; refresh (15 minutes)
-				1800       ; retry (30 minutes)
-				604800     ; expire (1 week)
-				86400      ; minimum (1 day)
+workers.local			IN SOA	tfm-alu0101371061-dhcp.workers.local. root.workers.local. (
+					300003	; serial
+					900	; refresh (15 minutes)
+					1800	; retry (30 minutes)
+					604800	; expire (1 week)
+					86400	; minimum (1 day)
 				)
-			NS	tfm-alu0101371061-dhcp.workers.local.
-			A	192.168.211.5
+				NS	tfm-alu0101371061-dhcp.workers.local.
+				A	192.168.211.5
 $ORIGIN workers.local.
-tfm-alu0101371061-dhcp	A	192.168.211.5
-tfm-alu0101371061-master A	192.168.212.31
-tfm-alu0101371061-router A	192.168.212.1
-$TTL 3600	; 1 hour
+tfm-alu0101371061-dhcp		A	192.168.211.5
+tfm-alu0101371061-master	A	192.168.212.31
+tfm-alu0101371061-router	A	192.168.212.1

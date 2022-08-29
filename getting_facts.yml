@@ -1,0 +1,11 @@
+---
+
+- name: Get facts
+  setup:
+    gather_subset: network
+
+- name: Show variable
+  debug:
+    var: ansible_facts.ens4.ipv4.address
+
+...

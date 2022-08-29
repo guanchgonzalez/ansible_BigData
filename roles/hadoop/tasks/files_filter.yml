@@ -1,0 +1,10 @@
+---
+# Apply the specific filter to get the Hadoop tarball files list
+# Target: localhost
+
+- name: Discard non-tarballs
+  replace:
+    path: "{{ role_path }}/files/content"
+    regexp: "^{{ username }}\\-[0-9\\.]*\\-[0-9a-zA-Z\\.]*$"
+
+...

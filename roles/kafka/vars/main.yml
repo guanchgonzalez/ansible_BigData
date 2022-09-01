@@ -8,7 +8,7 @@ username_SHA512_pass: kafka
 packages:
   - regex_name: nmap
 
-suburi: kafka
+version_suburi: kafka
 
 version: kafka
 

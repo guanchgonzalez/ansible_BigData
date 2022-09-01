@@ -17,6 +17,12 @@
     debug:
       var: ansible_facts
 
+- name: Reload vars file
+  become: true
+  become_user: "{{ username }}"
+  when: inventory_hostname != 'localhost'
+  include_vars: "{{ role_path }}/vars/main.yml"
+
 - name: Include common and HDFS config tasks for Hadoop framework deployment
   include_tasks: "{{ role_path }}/tasks/hdfs_config.yml"
 
@@ -31,7 +37,7 @@
 
 - name: Formating HDFS filesystems, starting Hadoop cluster daemons and deploying MapReduce files in the Namenode
   become: true
-  become_user: hadoop
+  become_user: "{{ username }}"
   when: inventory_hostname in groups['namenode']
   block:
   - name: Format Namenode HDFS

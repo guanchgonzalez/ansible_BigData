@@ -10,7 +10,7 @@
 
 - name: Create content file
   copy:
-    content: "{{ uri_content.content | regex_findall('<img src=\"/icons/[a-z=\"\\. ]*\\[DIR\\]\"> <a href=\"[a-z0-9\\-\\.]*/\">[a-z0-9\\-\\.]*/</a>') | sort(reverse=True) | join('\n') }}"
+    content: "{{ uri_content.content | regex_findall('<img src=\"/icons/[a-z]*\\.gif\" alt=\"\\[[D ][I ][R ]\\]\"> .*</a>') | sort(reverse=True) | join('\n') }}"
     dest: "{{ role_path }}/files/content"
 
 - name: Remove <img> tag
@@ -21,10 +21,10 @@
 - name: Remove </a> tag
   replace:
     path: "{{ role_path }}/files/content"
-    regexp: '([/]</a>)'
+    regexp: '(/</a>)|(</a>)'
 
 - name: Include framework filter
-  include_tasks: "{{ role_path }}/tasks/{{ filter_type }}"
+  include_tasks: "{{ role_path }}/tasks/{{ filter_type }}_filter.yml"
 
 - name: Remove blank lines
   lineinfile:
@@ -32,11 +32,11 @@
     regexp: '^$'
     state: absent
 
-- name: Get version
+- name: Get latest value
   set_fact:
     res: "{{ lookup('file', '{{ role_path }}/files/content').splitlines()[0] }}"
 
-- name: Show version
+- name: Show latest value
   debug:
     var: res
 

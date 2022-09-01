@@ -5,9 +5,14 @@
 - name: Discard non needed tarballs
   replace:
     path: "{{ role_path }}/files/content"
+    regexp: "^[0-9a-zA-Z_\\.]*$"
+
+- name: Discard other needed tarballs
+  replace:
+    path: "{{ role_path }}/files/content"
     regexp: "^[0-9a-zA-Z\\.]*{{ username }}\\-[0-9a-zA-Z\\.]*$"
 
-- name: Discard other non needed tarballs
+- name: Discard more non needed tarballs
   replace:
     path: "{{ role_path }}/files/content"
     regexp: "^{{ username }}\\-[0-9a-zA-Z\\.]*\\-bin\\-[0-9a-zA-Z\\.]*\\-[0-9a-zA-Z\\.]*$"

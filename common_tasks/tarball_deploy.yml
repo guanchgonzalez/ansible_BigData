@@ -3,9 +3,9 @@
 # Target hosts: N/A
 #
 
-- name: Download the latest technology tarball
-  when: inventory_hostname in groups['local']
-  block:
+#- name: Download the latest technology tarball
+#  when: inventory_hostname in groups['local']
+#  block:
 #  - name: Download the latest Hadoop tarball
 #    ignore_errors: true
 #    when: username == 'hadoop'
@@ -70,7 +70,7 @@
 #  include_vars: "{{ role_path }}/vars/main.yml"
 #
 - name: Download the latest tarball
-  include_task: "{{ playbook_dir }}/common_tasks/tarball_download.yml"
+  include_tasks: "{{ playbook_dir }}/common_tasks/tarball_download.yml"
 
 - name: Deploy the tarball thru the cluster
   become: true
@@ -85,10 +85,19 @@
       group: "{{ username }}"
       mode: '0755'
 
+  - name: Deploy the tarball into every node
+    copy:
+      src: "/home/ansible/roles/{{ username }}/files/{{ file }}"
+      dest: "/home/{{ username }}/{{ file }}"
+      owner: "{{ username }}"
+      group: "{{ username }}"
+      mode: '0644'
+
   - name: Decompress the tarball
     unarchive:
-      src: "{{ file }}"
+      src: "/home/{{ username }}/{{ file }}"
       dest: "/home/{{ username }}/{{ version }}"
+      remote_src: yes
       owner: "{{ username }}"
       group: "{{ username }}"
       mode: '0755'
@@ -108,7 +117,7 @@
     replace: "{{ version }}"
 
 - name: Delete the tarball from the cluster master
-  when: inventory_hostname in groups['local']
+  when: inventory_hostname == 'localhost'
   file:
     path: "{{ role_path }}/files/{{ file }}"
     state: absent

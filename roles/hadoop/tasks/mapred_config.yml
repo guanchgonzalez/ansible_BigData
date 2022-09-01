@@ -8,15 +8,6 @@
   become_user: "{{ username }}"
   when: inventory_hostname != 'localhost'
   block:
-  - name: Copy mapred-site.xml template
-    copy:
-      src: "/home/{{ username }}/{{ version }}/etc/hadoop/mapred-site.xml.template"
-      dest: "/home/{{ username }}/{{ version }}/etc/hadoop/mapred-site.xml"
-      remote_src: yes
-      owner: "{{ username }}"
-      group: "{{ username }}"
-      mode: '0755'
-
   - name: Configure mapred-site.xml file common parameters for Map and Reduce
     blockinfile:
       path: "/home/{{ username }}/{{ version }}/etc/hadoop/mapred-site.xml"
@@ -60,7 +51,7 @@
       block: |
         <property>
             <name>mapreduce.map.memory.mb</name>
-            <value>{{ ( ansible_memtotal_mb * 3 / 8 ) | int }}</value>
+            <value>{{ ( ansible_memtotal_mb * 1 / 16 ) | int }}</value>
         </property>
         <property>
             <name>mapreduce.map.cpu.vcores</name>
@@ -75,7 +66,7 @@
       block: |
         <property>
             <name>mapreduce.reduce.memory.mb</name>
-            <value>{{ ( ansible_memtotal_mb * 3 / 8 ) | int }}</value>
+            <value>{{ ( ansible_memtotal_mb * 1 / 16 ) | int }}</value>
         </property>
         <property>
             <name>mapreduce.reduce.cpu.vcores</name>

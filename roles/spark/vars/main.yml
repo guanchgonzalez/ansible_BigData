@@ -3,17 +3,17 @@
 
 username: spark
 
-username_SHA512_pass: $6$obTjyES95RkBQVcJ$HYVscO22ErbdopUGmldgqYULZ7LTeDdt5ypVeLxu1lPGhNHJ9WaTo2R9fNXLXgivYP2zgvt6D6tWoA2RpOl671
+username_SHA512_pass: $6$1ReAgM8ZUMgJBvFo$2Iu8Z4dzW0DmSm4zQeLyUHRLtuHLZ5LVmJWNTOFgwUIW.ZJtQj5KaxkaF8Kkqss.zhOCFlwfiYR7FsJ6LKrU4/
 
 packages:
   - regex_name: ncdu
   - regex_name: python38
   - regex_name: scala
 
-suburi: spark
+version_suburi: spark
 
-version: spark
+version: spark-3.3.0
 
-file: spark
+file: spark-3.3.0-bin-hadoop3.tgz
 
 ...

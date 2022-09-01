@@ -127,8 +127,9 @@
     group: root
     mode: '0644'
     content: |
-      export {{ username | upper }}_HOME=/home/{{ username }}
-      export PATH={{ '${' }}{{ username | upper }}_HOME{{ '}' }}/VERSION/bin{{ ':${' }}{{ username | upper }}_HOME{{ '}' }}/VERSION/sbin{{ ':${' }}{{ username | upper }}_HOME{{ '}/bin:${' }}PATH{{ '}' }}
+      export HOME=/home/{{ username }}
+      export {{ username | upper }}_HOME=/home/{{ username }}/VERSION
+      export PATH={{ '${' }}{{ username | upper }}_HOME{{ '}' }}/bin{{ ':${' }}{{ username | upper }}_HOME{{ '}' }}/sbin{{ ':${' }}{{ username | upper }}_HOME{{ '}/bin:${HOME}:${' }}PATH{{ '}' }}
 
 - name: Create the /var/log subdir for the deployed service
   become: true

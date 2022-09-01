@@ -7,6 +7,7 @@
   include_tasks: "{{ playbook_dir }}/common_tasks/main.yml"
 
 - name: Install pyspark library
+  become: true
   when: inventory_hostname != 'localhost'
   pip:
     name: pyspark
@@ -16,6 +17,9 @@
   become_user: "{{ username }}"
   when: inventory_hostname != 'localhost'
   block:
+  - name: Reload vars file
+    include_vars: "{{ role_path }}/vars/main.yml"
+
   - name: Create the local subdirectories
     loop:
       - 'data'
@@ -23,7 +27,7 @@
       - 'pid'
       - 'worker'
     file:
-      path: "/home/{{ usern }}/{{ version }}/local/{{ item }}"
+      path: "/home/{{ username }}/{{ version }}/local/{{ item }}"
       mode: '0755'
       state: directory
 
@@ -40,13 +44,13 @@
 
   - name: Create a copy of the spark-env.sh template
     copy:
-      src: "/home/{{ usern }}/{{ version }}/conf/spark-env.sh.template"
-      dest: "/home/{{ usern }}/{{ version }}/conf/spark-env.sh"
+      src: "/home/{{ username }}/{{ version }}/conf/spark-env.sh.template"
+      dest: "/home/{{ username }}/{{ version }}/conf/spark-env.sh"
       remote_src: yes
 
   - name: Fill the spark-env.sh file
     blockinfile:
-      path: "/home/{{ usern }}/{{ version }}/conf/spark-env.sh"
+      path: "/home/{{ username }}/{{ version }}/conf/spark-env.sh"
       mode: '0755'
       marker: "# {mark} ENV SPARK BLOCK"
       block: |
@@ -74,13 +78,13 @@
   block:
   - name: Create a copy of the spark-defaults.conf template
     copy:
-      src: "/home/{{ usern }}/{{ version }}/conf/spark-defaults.conf.template"
-      dest: "/home/{{ usern }}/{{ version }}/spark-defaults.conf"
+      src: "/home/{{ username }}/{{ version }}/conf/spark-defaults.conf.template"
+      dest: "/home/{{ username }}/{{ version }}/conf/spark-defaults.conf"
       remote_src: yes
 
   - name: Fill the spark-defaults.conf file
     blockinfile:
-      path: "/home/{{ usern }}/{{ version }}/conf/spark-defaults.conf"
+      path: "/home/{{ username }}/{{ version }}/conf/spark-defaults.conf"
       mode: '0755'
       marker: "# {mark} SPARK CONF BLOCK"
       block: |
@@ -103,20 +107,20 @@
 
   - name: Create a copy of the slaves template
     copy:
-      src: "/home/{{ usern }}/{{ version }}/conf/slaves.template"
-      dest: "/home/{{ usern }}/{{ version }}/conf/slaves"
+      src: "/home/{{ username }}/{{ version }}/conf/workers.template"
+      dest: "/home/{{ username }}/{{ version }}/conf/slaves"
       remote_src: yes
 
   - name: Remove localhost line from the slaves file
     lineinfile:
-      path: "/home/{{ usern }}/{{ version }}/conf/slaves"
+      path: "/home/{{ username }}/{{ version }}/conf/slaves"
       regexp: '^localhost'
       state: absent
 
   - name: Fill the slaves file
     loop: "{{ groups.tdm_worker }}"
     lineinfile:
-      path: "/home/{{ usern }}/{{ version }}/conf/slaves"
+      path: "/home/{{ username }}/{{ version }}/conf/slaves"
       line: "{{ item }}"
       mode: '0644'
 
@@ -126,12 +130,12 @@
       - 'TDM_P2_anexo_2_WordCount.py'
     copy:
       src: "{{ item }}"
-      dest: "/home/{{ usern }}/{{ version }}/examples/src/main/python/"
-      owner: "{{ usern }}"
-      group: "{{ usern }}"
+      dest: "/home/{{ username }}/{{ version }}/examples/src/main/python/"
+      owner: "{{ username }}"
+      group: "{{ username }}"
       mode: '0755'
 
   - name: Start the Spark cluster
-    command: "/home/{{ usern }}/{{ version }}/sbin/start-all.sh"
+    command: "/home/{{ username }}/{{ version }}/sbin/start-all.sh"
 
 ...

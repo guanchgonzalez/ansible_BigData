@@ -1,20 +1,20 @@
 ---
 # Main playbook to deploy all the Ansible TFM infraestructure.
 
-#- hosts: local:worker:dhcp
-#  gather_facts: false
-#  roles:
-#    - role: ulliaas
+- hosts: local:worker:dhcp
+  gather_facts: false
+  roles:
+    - role: ulliaas
 
-#- hosts: worker
-#  gather_facts: false
-#  roles:
-#    - role: base
+- hosts: worker
+  gather_facts: false
+  roles:
+    - role: base
 
-#- hosts: namenode:datanode:local
-#  gather_facts: false
-#  roles:
-#    - role: hadoop
+- hosts: namenode:datanode:local
+  gather_facts: false
+  roles:
+    - role: hadoop
 #  tasks:
 #    - name: Remove hadoop user environment
 #      become: true
@@ -22,8 +22,9 @@
 #      when: inventory_hostname != 'localhost'
 #      shell: |
 #        ps -fuhadoop | grep hadoop | awk '{print $2}' | xargs kill -9
-#        rm -rf /home/hadoop
+#        rm -rf /var/log/hadoop
 #        userdel hadoop
+#        rm -rf /home/hadoop
 
 - hosts: tdm_master:tdm_worker:local
   gather_facts: false
@@ -36,8 +37,9 @@
 #      when: inventory_hostname != 'localhost'
 #      shell: |
 #        ps -fuspark | grep spark | awk '{print $2}' | xargs kill -9
-#        rm -rf /home/spark
+#        rm -rf /var/log/spark
 #        userdel spark
+#        rm -rf /home/spark
 
 #- hosts: tdm_master:local
 #  gather_facts: false
@@ -50,7 +52,8 @@
 #      when: inventory_hostname != 'localhost'
 #      shell: |
 #        ps -fukafka | grep kafka | awk '{print $2}' | xargs kill -9
-#        rm -rf /home/kafka
+#        rm -rf /var/log/kafka
 #        userdel kafka
+#        rm -rf /home/kafka
 
 ...

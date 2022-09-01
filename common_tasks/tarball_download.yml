@@ -1,5 +1,5 @@
 ---
-# Tarball download or the technology given by its username.
+# Tarball download of the technology given by its username.
 # Target hosts: localhost
 
 - name: Download the latest tarball
@@ -23,7 +23,7 @@
   - name: Get the required file
     include_tasks: "{{ playbook_dir }}/common_tasks/filter_uri_content.yml"
     vars:
-      - suburi: "{{ version_suburi }}{{ version }}"
+      - suburi: "{{ version_suburi }}/{{ version }}"
       - filter_type: 'files'
 
   - name: Save the tarball version as a variable
@@ -34,5 +34,10 @@
 
   - name: Reload vars file
     include_vars: "{{ role_path }}/vars/main.yml"
+
+  - name: Download tarball
+    get_url:
+      url: "https://archive.apache.org/dist/{{ version_suburi }}/{{ version }}/{{ file }}"
+      dest: "/home/ansible/roles/{{ username }}/files/{{ file }}"
 
 ...

@@ -43,7 +43,7 @@
 #      src: "{{ tarball }}"
 #      dest: /home/kafka
 #      owner: kafka
-#      group: kafka
+#      group: bigdata
 #      mode: '0755'
 #      extra_opts: [--strip-components=1]
 #
@@ -102,7 +102,7 @@
     src: "{{ item }}"
     dest: /home/spark/examples/src/main/python/
     owner: spark
-    group: spark
+    group: bigdata
     mode: '0755'
   with_items:
     - 'TDM_P3_anexo_1_WordCount_Kafka.py'

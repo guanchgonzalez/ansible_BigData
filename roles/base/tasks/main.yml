@@ -8,44 +8,96 @@
     name: ansible
     generate_ssh_key: yes
 
+- name: Create user group
+  become: true
+  group:
+    name: bigdata
+    state: present
+
 - name: Granting read permission to every user for ansible authorized_keys file
   file:
-    path: "{{ item }}"
+    path: /home/ansible/.ssh/authorized_keys
     state: touch
-    mode: '0644'
-  with_items:
-    - /home/ansible/.ssh/id_rsa.pub
-    - /home/ansible/.ssh/authorized_keys
+    mode: '0600'
 
 - name: Enabling ServerAliveInterval and ServerAliveCountMax in SSH service as client
   become: true
   block:
   - name: Enable Host parameter
-    lineinfile:
+    replace:
       path: /etc/ssh/ssh_config
-      regexp: '^# Host'
-      line: Host
+      regexp: '^# Host \*$'
+      replace: 'Host *'
 
   - name: Enable ServerAlive parameters
+    loop:
+      - '  ServerAliveInterval 20'
+      - '  ServerAliveCountMax 360'
     lineinfile:
       path: /etc/ssh/ssh_config
       insertafter: '^Host *'
       line: "{{ item }}"
-    with_items:  
-      - '  ServerAliveInterval 20'
-      - '  ServerAliveCountMax 360'
 
 - name: Enabling ClientAliveInterval and ClientAliveCountMax in SSH service as server
   become: true
+  loop:
+    - 'ClientAliveInterval 20'
+    - 'ClientAliveCountMax 360'
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    insertafter: '^UsePAM yes'
+    line: "{{ item }}"
+
+- name: Removing active Password, ChallengeResponse and Hostbased Authentication directives
+  become: true
   block:
-  - name: Enable ClientAlive parameters
+  - name: Remove active PasswordAuthentication directive
+    loop:
+      - /etc/ssh/ssh_config
+      - /etc/ssh/sshd_config
+    replace:
+      path: "{{ item }}"
+      regexp: '^[\s]*PasswordAuthentication[\s]*([Yy][Ee][Ss]|[Nn][Oo])(\s)*$'
+
+  - name: Remove active ChallengeResponseAuthentication directive
+    loop:
+      - /etc/ssh/ssh_config
+      - /etc/ssh/sshd_config
+    replace:
+      path: "{{ item }}"
+      regexp: '^[\s]*ChallengeResponseAuthentication[\s]*([Yy][Ee][Ss]|[Nn][Oo])(\s)*$'
+
+  - name: Remove active HostbasedAuthentication directive
+    loop:
+      - /etc/ssh/ssh_config
+      - /etc/ssh/sshd_config
+    replace:
+      path: "{{ item }}"
+      regexp: '^[\s]*HostbasedAuthentication[\s]*([Yy][Ee][Ss]|[Nn][Oo])(\s)*$'
+
+- name: Disabling Password and ChallengeResponse and enabling Hostbased Authentication SSH directives
+  become: true
+  block:
+  - name: Disable Password and ChallengeResponse and enable Hostbased Authentication in SSH client service
+    loop:
+      - '  PasswordAuthentication no'
+      - '  ChallengeResponseAuthentication no'
+      - '  HostbasedAuthentication yes'
+      - '  StrictHostKeyChecking no'
+    lineinfile:
+      path: /etc/ssh/ssh_config
+      insertafter: '^Host *'
+      line: "{{ item }}"
+
+  - name: Disable Password and ChallengeResponse and enable Hostbased Authentication in SSH server service
+    loop:
+      - 'PasswordAuthentication no'
+      - 'ChallengeResponseAuthentication no'
+      - 'HostbasedAuthentication yes'
     lineinfile:
       path: /etc/ssh/sshd_config
       insertafter: '^UsePAM yes'
       line: "{{ item }}"
-    with_items:
-      - 'ClientAliveInterval 20'
-      - 'ClientAliveCountMax 360'
 
   - name: Restart SSH service
     service:
@@ -54,11 +106,11 @@
 
 - name: Disable IPv6 with sysctl
   become: true
-  sysctl: name={{ item }} value=1 state=present reload=yes
-  with_items:
+  loop:
     - net.ipv6.conf.all.disable_ipv6
     - net.ipv6.conf.default.disable_ipv6
     - net.ipv6.conf.lo.disable_ipv6
+  sysctl: name={{ item }} value=1 state=present reload=yes
 
 - name: Disable firewalld service
   become: true
@@ -77,24 +129,24 @@
   become: true
   block:
   - name: Locate all the repo files
+    register: repos
     find:
       paths: /etc/yum.repos.d/
       patterns: '*.repo'
-    register: repos
 
   - name: Comment mirrorlist line
+    loop: "{{ repos.files }}"
     replace:
       path: "{{ item.path }}"
       regexp: '^mirrorlist'
       replace: '#mirrorlist'
-    with_items: "{{ repos.files }}"
 
   - name: Uncomment baseurl line
+    loop: "{{ repos.files }}"
     replace:
       path: "{{ item.path }}"
       regexp: '^#baseurl=http:\/\/mirro(r|rlist)'
       replace: 'baseurl=http://vault'
-    with_items: "{{ repos.files }}"
 
   - name: Dnf clean all
     command: dnf clean all
@@ -112,6 +164,7 @@
       - regex_name: bind-utils
       - regex_name: bind-lib*
       - regex_name: binutils
+      - regex_name: chrony
       - regex_name: epel-release
       - regex_name: ksh
       - regex_name: mlocate
@@ -124,32 +177,40 @@
 
 - name: Deploying the Java profile.d shell script
   become: true
-  block:
-  - name: Create an empty Java profile.d file
-    file:
-      path: /etc/profile.d/java.sh
-      owner: root
-      group: root
-      mode: '0644'
-      state: touch
+  copy:
+    dest: /etc/profile.d/java.sh
+    owner: root
+    group: root
+    mode: '0644'
+    content: |
+      export JAVA_HOME=/etc/alternatives/jre
+      export PATH=${JAVA_HOME}/bin:${PATH}
 
-  - name: Fill the Java profile.d file
-    copy:
-      dest: /etc/profile.d/java.sh
-      content: |
-        export JAVA_HOME=/etc/alternatives/jre
-        export PATH=${JAVA_HOME}/bin:${PATH}
+- name: Deploy chrony (NTP) service as a client
+  become: true
+  block:
+  - name: Configure chrony (NTP) service as a client
+    replace:
+      path: /etc/chrony.conf
+      regexp: '^pool (.*)$'
+      replace: "server {{ groups['dhcp'][0] }}"
+
+  - name: Restart chrony (NTP) service
+    service:
+      name: chronyd
+      enabled: yes
+      state: restarted
 
 - name: Disable SElinux and reboot workers
   become: true
   block:
   - name: Disable SElinux
+    register: rebooting
     selinux:
       state: disabled
-    register: reboot_required
 
   - name: Reboot the VM
+    when: rebooting.reboot_required
     reboot:
-    when: reboot_required.reboot_required
 
 ...

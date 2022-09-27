@@ -3,105 +3,138 @@
 # Target hosts: N/A
 #
 
-- name: Generate a new encrypted user password
-  become: true
-  when: inventory_hostname in groups['local']
-  block:
-  - name: Encrypt user password with openssl
-    shell: echo {{ username }} | openssl passwd -6 -stdin
-    register: uspass
-
-  - name: Save the new encrypted password as a variable
-    replace:
-      path: "{{ role_path }}/vars/main.yml"
-      regexp: '^username_SHA512_pass: (.*)$'
-      replace: "username_SHA512_pass: {{ uspass.stdout }}"
-
-- name: Reload vars file
+#- name: Generate a new encrypted user password
+#  become: true
+#  when: inventory_hostname in groups['local']
+#  block:
+#  - name: Encrypt user password with openssl
+#    shell: echo {{ username }} | openssl passwd -6 -stdin
+#    register: uspass
+#
+#  - name: Save the new encrypted password as a variable
+#    replace:
+#      path: "{{ role_path }}/vars/main.yml"
+#      regexp: '^username_SHA512_pass: (.*)$'
+#      replace: "username_SHA512_pass: {{ uspass.stdout }}"
+#
+#- name: Reload vars file
+#  become: true
+#  when: inventory_hostname != 'localhost'
+#  include_vars: "{{ role_path }}/vars/main.yml"
+#
+- name: Create user with the same password
   become: true
   when: inventory_hostname != 'localhost'
-  include_vars: "{{ role_path }}/vars/main.yml"
+  user:
+    name: "{{ username }}"
+    group: bigdata
+    password: "{{ username | password_hash('sha512') }}"
+    generate_ssh_key: yes
 
-- name: Create the group and the user with password
-  become: true
-  when: inventory_hostname != 'localhost'
-  block:
-  - name: Create user group
-    group:
-      name: "{{ username }}"
-      state: present
+- name: Create a local files subdirectory
+  when: inventory_hostname == 'localhost'
+  file:
+    path: "{{ role_path }}/files/pubkeys/"
+    state: directory
 
-  - name: Create user with the same password
-    user:
-      name: "{{ username }}"
-      group: "{{ username }}"
-      password: "{{ username_SHA512_pass }}"
-      generate_ssh_key: yes
-
-- name: Deploy SSH keys relationships on every cluster node
+- name: Get all the public key files
   become: true
   become_user: "{{ username }}"
   when: inventory_hostname != 'localhost'
-  block:
-  - name: Create .ssh user files and set read permissions to both id_rsa.pub and known_hosts files
-    file:
-      path: "{{ item }}"
-      state: touch
-      mode: '0644'
-      modification_time: preserve
-      access_time: preserve
-    with_items:
-      - "/home/{{ username }}/.ssh/id_rsa.pub"
-      - "/home/{{ username }}/.ssh/known_hosts"
+  fetch:
+    src: "/home/{{ username }}/.ssh/id_rsa.pub"
+    dest: "{{ role_path }}/files/pubkeys/{{ inventory_hostname }}/"
+    flat: yes
 
-  - name: Create the .ssh config file
-    copy:
-      dest: "/home/{{ username }}/.ssh/config"
-      content: StrictHostKeyChecking no
-      owner: "{{ username }}"
-      group: "{{ username }}"
-      mode: '0644'
+- name: Create empty target file
+  when: inventory_hostname == 'localhost'
+  file:
+    path: "{{ role_path }}/files/authorized_keys"
+    mode: '0644'
+    state: touch
 
-- name: Collect remote user pub keys and deploy into authorized_keys files
-  block:
-  - name: Collect the remote user pub keys to a local authorized_keys file
-    become: true
-    become_user: "{{ username }}"
-    when: inventory_hostname != 'localhost'
-    register: pubkey
-    slurp:
-      src: "/home/{{ username }}/.ssh/id_rsa.pub"
+- name: Copy all pubkey contents into a single local file
+  when: inventory_hostname == 'localhost'
+  loop: "{{ groups['worker'] }}"
+  lineinfile:
+    path: "{{ role_path }}/files/authorized_keys"
+    insertafter: EOF
+    line: "{{ lookup('file', '{{ role_path }}/files/pubkeys/{{ item }}/id_rsa.pub') }}"
 
-  - name: Create common authorized_keys file
-    with_items: "{{ pubkey.content | b64decode }}"
-    when: inventory_hostname != 'localhost'
-    delegate_to: localhost
-    lineinfile:
-      path: "{{ role_path }}/vars/authorized_keys"
-      line: "{{ item }}"
-      create: yes
+- name: Deploy authorized_keys file to remote nodes
+  become: true
+  become_user: "{{ username }}"
+  when: inventory_hostname != 'localhost'
+  copy:
+    src: "{{ role_path }}/files/authorized_keys"
+    dest: "/home/{{ username }}/.ssh/authorized_keys"
+    owner: "{{ username }}"
+    group: bigdata
+    mode: '0600'
 
-  - name: Remove empty lines from local authorized_keys file
-    lineinfile:
-      path: "{{ role_path }}/vars/authorized_keys"
-      regexp: '^\s*$'
-      state: absent
+#  - name: Create .ssh user files and set read permissions to both id_rsa.pub and known_hosts files
+#    become: true
+#    become_user: "{{ username }}"
+#    when: inventory_hostname != 'localhost'
+#    loop:
+#      - "/home/{{ username }}/.ssh/id_rsa.pub"
+#      - "/home/{{ username }}/.ssh/known_hosts"
+#    file:
+#      path: "{{ item }}"
+#      state: touch
+#      mode: '0600'
+#      modification_time: preserve
+#      access_time: preserve
+#
+- name: Remove created local files
+  loop:
+    - authorized_keys
+    - pubkeys
+  when: inventory_hostname == 'localhost'
+  file:
+    path: "{{ role_path }}/files/{{ item }}"
+    state: absent
 
-  - name: Deploy authorized_keys file to remote nodes
-    become: true
-    when: inventory_hostname != 'localhost'
-    copy:
-      src: "{{ role_path }}/vars/authorized_keys"
-      dest: "/home/{{ username }}/.ssh/authorized_keys"
-      owner: "{{ username }}"
-      group: "{{ username }}"
-      mode: '0644'
-
-  - name: Remove local authorized_keys file
-    file:
-      path: "{{ role_path }}/vars/authorized_keys"
-      state: absent
-
+#- name: Collect remote user pub keys and deploy into authorized_keys files
+#  block:
+#  - name: Collect the remote user pub keys to a local authorized_keys file
+#    become: true
+#    become_user: "{{ username }}"
+#    when: inventory_hostname != 'localhost'
+#    register: pubkey
+#    slurp:
+#      src: "/home/{{ username }}/.ssh/id_rsa.pub"
+#
+#  - name: Create common authorized_keys file
+#    with_items: "{{ pubkey.content | b64decode }}"
+#    when: inventory_hostname != 'localhost'
+#    delegate_to: localhost
+#    lineinfile:
+#      path: "{{ role_path }}/vars/authorized_keys"
+#      line: "{{ item }}"
+#      create: yes
+#
+#  - name: Remove empty lines from local authorized_keys file
+#    lineinfile:
+#      path: "{{ role_path }}/vars/authorized_keys"
+#      regexp: '^\s*$'
+#      state: absent
+#
+#  - name: Deploy authorized_keys file to remote nodes
+#    become: true
+#    when: inventory_hostname != 'localhost'
+#    copy:
+#      src: "{{ role_path }}/vars/authorized_keys"
+#      dest: "/home/{{ username }}/.ssh/authorized_keys"
+#      owner: "{{ username }}"
+#      group: bigdata
+#      mode: '0644'
+#
+#  - name: Remove local authorized_keys file
+#    file:
+#      path: "{{ role_path }}/vars/authorized_keys"
+#      state: absent
+#
 - name: Enable SSH login to remote users
   become: true
   when: inventory_hostname != 'localhost'
@@ -118,27 +151,32 @@
     name: sshd
     state: restarted
 
-- name: Deploy the user profile.d shell script
+- name: User environment last tasks
   become: true
   when: inventory_hostname != 'localhost'
-  copy:
-    dest: /etc/profile.d/{{ username }}.sh
-    owner: root
-    group: root
-    mode: '0644'
-    content: |
-      export HOME=/home/{{ username }}
-      export {{ username | upper }}_HOME=/home/{{ username }}/VERSION
-      export PATH={{ '${' }}{{ username | upper }}_HOME{{ '}' }}/bin{{ ':${' }}{{ username | upper }}_HOME{{ '}' }}/sbin{{ ':${' }}{{ username | upper }}_HOME{{ '}/bin:${HOME}:${' }}PATH{{ '}' }}
+  block:
+  - name: Deploy the user profile.d shell script
+    copy:
+      dest: /etc/profile.d/{{ username }}.sh
+      owner: root
+      group: root
+      mode: '0644'
+      content: |
+        export {{ username | upper }}_HOME=/home/{{ username }}/VERSION
+        export PATH={{ '${' }}{{ username | upper }}_HOME{{ '}' }}/bin{{ ':${' }}{{ username | upper }}_HOME{{ '}' }}/sbin{{ ':${' }}{{ username | upper }}_HOME{{ '}/bin:${HOME}:${' }}PATH{{ '}' }}
 
-- name: Create the /var/log subdir for the deployed service
-  become: true
-  when: inventory_hostname != 'localhost'
-  file:
-    path: "/var/log/{{ username }}"
-    state: directory
-    owner: "{{ username }}"
-    group: "{{ username }}"
-    mode: '0755'
+  - name: Create the /var/log subdir for the deployed service
+    file:
+      path: "/var/log/{{ username }}"
+      state: directory
+      owner: "{{ username }}"
+      group: bigdata
+      mode: '0755'
+
+  - name: Change HOME permission to allow access to other bigdata group users
+    file:
+      path: "/home/{{ username }}"
+      state: directory
+      mode: '0750'
 
 ...

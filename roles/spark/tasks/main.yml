@@ -132,7 +132,7 @@
       src: "{{ item }}"
       dest: "/home/{{ username }}/{{ version }}/examples/src/main/python/"
       owner: "{{ username }}"
-      group: "{{ username }}"
+      group: bigdata
       mode: '0755'
 
   - name: Start the Spark cluster

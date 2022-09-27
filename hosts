@@ -10,11 +10,13 @@ tfm-alu0101371061-master.management.local ansible_connection=local ansible_pytho
 [worker]
 #id-tdm-rgl-wn0[1:7].workers.local
 tfm-alu0101371061-wn0[1:8].workers.local
-#tfm-alu0101371061-wn10.workers.local
 
 [dhcp]
 #tfm-alu0101371061-dhcp.management.local
 tfm-alu0101371061-dhcp.workers.local
+
+[router]
+tfm-alu0101371061-router.workers.local
 
 [namenode]
 #id-tdm-rgl-wn04.workers.local

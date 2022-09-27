@@ -11,19 +11,19 @@
   - name: Create Hadoop data tmp directory
     file:
       path: "/home/{{ username }}/hdfs/tmp"
-      mode: '0700'
+      mode: '0770'
       state: directory
 
   - name: Create HDFS namenode directory
     file:
       path: "/home/{{ username }}/hdfs/namenode"
-      mode: '0700'
+      mode: '0770'
       state: directory
 
   - name: Create HDFS datanode directory
     file:
       path: "/home/{{ username }}/hdfs/datanode"
-      mode: '0700'
+      mode: '0770'
       state: directory
 
 - name: Create the master and slaves/workers config files for every node
@@ -81,7 +81,7 @@
       path: "/var/log/{{ username }}/yarn"
       state: directory
       owner: "{{ username }}"
-      group: "{{ username }}"
+      group: bigdata
       mode: '0755'
 
   - name: Define Yarn log dir
@@ -89,5 +89,27 @@
       path: "/home/{{ username }}/{{ version }}/etc/hadoop/yarn-env.sh"
       regexp: '^  YARN_LOG_DIR='
       line: "  YARN_LOG_DIR=/var/log/{{ username }}/yarn"
+
+- name: Deploy Bash env files
+  become: true
+  become_user: "{{ username }}"
+  when: inventory_hostname != 'localhost'
+  block:
+  - name: Deploy the env files
+    loop:
+      - .bashrc
+      - .bash_profile
+    copy:
+      src: "{{ role_path }}/files/{{ item }}"
+      dest: "/home/{{ username }}"
+      owner: "{{ username }}"
+      group: bigdata
+      mode: '0644'
+
+  - name: Define HADOOP_HOME env variable into deployed .bashrc
+    replace:
+      path: "/home/{{ username }}/.bashrc"
+      regexp: 'VERSION'
+      replace: "{{ version }}"
 
 ...

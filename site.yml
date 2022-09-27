@@ -1,7 +1,10 @@
 ---
 # Main playbook to deploy all the Ansible TFM infraestructure.
 
-- hosts: local:worker:dhcp
+- hosts:
+    - local
+    - worker
+    - dhcp
   gather_facts: false
   roles:
     - role: ulliaas
@@ -11,7 +14,10 @@
   roles:
     - role: base
 
-- hosts: namenode:datanode:local
+- hosts:
+    - local
+    - namenode
+    - datanode
   gather_facts: false
   roles:
     - role: hadoop
@@ -23,10 +29,13 @@
 #      shell: |
 #        ps -fuhadoop | grep hadoop | awk '{print $2}' | xargs kill -9
 #        rm -rf /var/log/hadoop
-#        userdel hadoop
+#        userdel -r hadoop
 #        rm -rf /home/hadoop
 
-- hosts: tdm_master:tdm_worker:local
+- hosts:
+    - local
+    - tdm_master
+    - tdm_worker
   gather_facts: false
   roles:
    - role: spark
@@ -38,10 +47,12 @@
 #      shell: |
 #        ps -fuspark | grep spark | awk '{print $2}' | xargs kill -9
 #        rm -rf /var/log/spark
-#        userdel spark
+#        userdel -r spark
 #        rm -rf /home/spark
 
-#- hosts: tdm_master:local
+#- hosts:
+#    - local
+#    - tdm_master
 #  gather_facts: false
 #  roles:
 #    - role: kafka
@@ -53,7 +64,7 @@
 #      shell: |
 #        ps -fukafka | grep kafka | awk '{print $2}' | xargs kill -9
 #        rm -rf /var/log/kafka
-#        userdel kafka
+#        userdel -r kafka
 #        rm -rf /home/kafka
 
 ...

@@ -1,0 +1,80 @@
+---
+# Get pubkeys
+# Target: worker
+#
+
+- hosts:
+    - local
+    - namenode
+    - datanode
+  gather_facts: false
+  vars:
+    - username: hadoop
+  tasks:
+  - name: Delete user
+    become: true
+    when: inventory_hostname != 'localhost'
+    user:
+      name: "{{ username }}"
+      state: absent
+
+  - name: Remove created local files
+    loop:
+      - authorized_keys
+      - pubkeys
+    when: inventory_hostname == 'localhost'
+    file:
+      path: "{{ playbook_dir }}/fetching/{{ item }}"
+      state: absent
+
+  - name: Create user with the same password
+    become: true
+    when: inventory_hostname != 'localhost'
+    user:
+      name: "{{ username }}"
+      group: bigdata
+      password: "{{ username | password_hash('sha512') }}"
+      generate_ssh_key: yes
+
+  - name: Create a local files subdirectory
+    when: inventory_hostname == 'localhost'
+    file:
+      path: "{{ playbook_dir }}/fetching/pubkeys/"
+      state: directory
+
+  - name: Get all the public key files
+    become: yes
+    become_user: "{{ username }}"
+    when: inventory_hostname in groups['worker']
+    fetch:
+      src: "/home/{{ username }}/.ssh/id_rsa.pub"
+      dest: "{{ playbook_dir }}/fetching/pubkeys/{{ inventory_hostname }}/"
+      flat: yes
+
+  - name: Create empty target file
+    when: inventory_hostname == 'localhost'
+    file:
+      path: "{{ playbook_dir }}/fetching/authorized_keys"
+      mode: '0644'
+      state: touch
+
+  - name: Copy all pubkey contents into a single local file
+    when: inventory_hostname == 'localhost'
+    loop: "{{ groups['worker'] }}"
+    lineinfile:
+      path: "{{ playbook_dir }}/fetching/authorized_keys"
+      insertafter: EOF
+      line: "{{ lookup('file', '{{ playbook_dir }}/fetching/pubkeys/{{ item }}/id_rsa.pub') }}"
+
+  - name: Deploy authorized_keys file to remote nodes
+    become: true
+    become_user: "{{ username }}"
+    when: inventory_hostname != 'localhost'
+    copy:
+      src: "{{ playbook_dir }}/fetching/authorized_keys"
+      dest: "/home/{{ username }}/.ssh/authorized_keys"
+      owner: "{{ username }}"
+      group: bigdata
+      mode: '0600'
+
+...

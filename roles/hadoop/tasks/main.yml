@@ -35,6 +35,32 @@
 - name: Include files creation tasks for Hadoop framework deployment
   include_tasks: "{{ role_path }}/tasks/nodes_files.yml"
 
+- name: Deploy MapReduce files keeping its permissions (Ansible copy don't keep it)
+  become: true
+  become_user: "{{ username }}"
+  when: inventory_hostname in groups['namenode']
+  ansible.posix.synchronize:
+    src: files/MapReduce/
+    dest: "/home/{{ username }}"
+
+- name: Changing owner and group of deployed files and fixing original HOME permissions
+  become: true
+  when: inventory_hostname in groups['namenode']
+  block:
+  - name: Change owner and group of deployed files
+    file:
+      path: "/home/{{ username }}"
+      owner: "{{ username }}"
+      group: bigdata
+      state: directory
+      recurse: yes
+ 
+  - name: Fix original HOME permissions
+    file:
+      path: "/home/{{ username }}"
+      state: directory
+      mode: '0750'
+
 - name: Formating HDFS filesystems, starting Hadoop cluster daemons and deploying MapReduce files in the Namenode
   become: true
   become_user: "{{ username }}"
@@ -64,28 +90,5 @@
     shell: |
       . ~/.bash_profile
       start-yarn.sh
-
-  - name: Deploy MapReduce files keeping its permissions (Ansible copy don't keep it)
-    ansible.posix.synchronize:
-      src: files/MapReduce/
-      dest: "/home/{{ username }}"
-
-- name: Changing owner and group of deployed files and fixing original HOME permissions
-  become: true
-  when: inventory_hostname in groups['namenode']
-  block:
-  - name: Change owner and group of deployed files
-    file:
-      path: "/home/{{ username }}"
-      owner: "{{ username }}"
-      group: "{{ username }}"
-      state: directory
-      recurse: yes
-
-  - name: Fix original HOME permissions
-    file:
-      path: "/home/{{ username }}"
-      state: directory
-      mode: '0700'
 
 ...

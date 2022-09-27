@@ -82,7 +82,7 @@
       state: directory
       path: "/home/{{ username }}/{{ version }}"
       owner: "{{ username }}"
-      group: "{{ username }}"
+      group: bigdata
       mode: '0755'
 
   - name: Deploy the tarball into every node
@@ -90,7 +90,7 @@
       src: "/home/ansible/roles/{{ username }}/files/{{ file }}"
       dest: "/home/{{ username }}/{{ file }}"
       owner: "{{ username }}"
-      group: "{{ username }}"
+      group: bigdata
       mode: '0644'
 
   - name: Decompress the tarball
@@ -99,7 +99,7 @@
       dest: "/home/{{ username }}/{{ version }}"
       remote_src: yes
       owner: "{{ username }}"
-      group: "{{ username }}"
+      group: bigdata
       mode: '0755'
       extra_opts: [--strip-components=1]
 

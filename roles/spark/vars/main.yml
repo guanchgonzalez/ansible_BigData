@@ -3,7 +3,7 @@
 
 username: spark
 
-username_SHA512_pass: $6$1ReAgM8ZUMgJBvFo$2Iu8Z4dzW0DmSm4zQeLyUHRLtuHLZ5LVmJWNTOFgwUIW.ZJtQj5KaxkaF8Kkqss.zhOCFlwfiYR7FsJ6LKrU4/
+#username_SHA512_pass: $6$NII9ay0asFYKNQCR$4bB2EkeNZG.k9SBDc.1ch1kOPrAviHzkJguOR6jxRUJezpsOe.on8eZFrvZNtKWc1Qnwx7LCllez8lFPKHS4h1
 
 packages:
   - regex_name: ncdu

@@ -26,7 +26,7 @@
     state: present
     wait: yes
   with_items: "{{ nodes }}"
-  ignore_errors: yes
+  ignore_errors: true
 
 - name: Update VM via cloud-init
   ovirt_vm:
@@ -35,12 +35,12 @@
     state: running
     timeout: 360
     cloud_init_nics:
-      - nic_name: ens3
-        nic_boot_protocol: dhcp
-        nic_on_boot: True
-      - nic_name: ens4
-        nic_boot_protocol: dhcp
-        nic_on_boot: True
+    - nic_name: ens3
+      nic_boot_protocol: dhcp
+      nic_on_boot: True
+    - nic_name: ens4
+      nic_boot_protocol: dhcp
+      nic_on_boot: True
     cloud_init:
       host_name: "{{ prefix }}{{ item.node_sufix }}.{{ subnet }}.local"
       user_name: ansible
@@ -68,33 +68,33 @@
           - ifup ens3
     wait: yes
   with_items: "{{ nodes }}"
-  ignore_errors: yes
+  ignore_errors: true
 
 - name: Stop and remove VM's
   block:
-    - name: Stop VM's
-      ovirt_vm:
-        auth: "{{ ovirt_auth }}"
-        name: "{{ prefix }}{{ item.node_sufix }}"
-        state: stopped
-        timeout: 360
-      with_items: "{{ removing }}"
-  
-    - name: Remove VM's
-      ovirt_vm:
-        auth: "{{ ovirt_auth }}"
-        name: "{{ prefix }}{{ item.node_sufix }}"
-        state: absent
-        timeout: 360
-      with_items: "{{ removing }}"
+  - name: Stop VM's
+    ovirt_vm:
+      auth: "{{ ovirt_auth }}"
+      name: "{{ prefix }}{{ item.node_sufix }}"
+      state: stopped
+      timeout: 360
+    with_items: "{{ removing }}"
 
-    - name: Clean known_hosts file
-      lineinfile:
-        path: /home/ansible/.ssh/known_hosts
-        regexp: '{{ prefix }}{{ item.node_sufix }}.*'
-        state: absent
-      with_items: "{{ removing }}"
-  ignore_errors: yes
+  - name: Remove VM's
+    ovirt_vm:
+      auth: "{{ ovirt_auth }}"
+      name: "{{ prefix }}{{ item.node_sufix }}"
+      state: absent
+      timeout: 360
+    with_items: "{{ removing }}"
+
+  - name: Clean known_hosts file
+    lineinfile:
+      path: /home/ansible/.ssh/known_hosts
+      regexp: '{{ prefix }}{{ item.node_sufix }}.*'
+      state: absent
+    with_items: "{{ removing }}"
+  ignore_errors: true
 
 #- name: Debug. Show hostvars.inventory_hostname
 #  debug:
@@ -119,5 +119,4 @@
   ovirt_auth:
     ovirt_auth: "{{ ovirt_auth }}"
     state: absent
-
 ...

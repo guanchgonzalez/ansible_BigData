@@ -5,62 +5,62 @@
 
 - name: Creating Hadoop user
   block:
-    - name: Create hadoop group
-      group:
-        name: hadoop
-        state: present
+  - name: Create hadoop group
+    group:
+      name: hadoop
+      state: present
 
-    - name: Create hadoop user
-      user:
-        name: hadoop
-        group: hadoop
-        password: $6$wyJynfbpYdgnE/OR$Ww24YJ.niKgC5fc37yrAwD5NpuE43tszAkqlOeLeoeeuyI184TLtkGxTjFWCjR1BuW29AdtFwzyln4PwwkQuG0
-        generate_ssh_key: yes
+  - name: Create hadoop user
+    user:
+      name: hadoop
+      group: hadoop
+      password: $6$wyJynfbpYdgnE/OR$Ww24YJ.niKgC5fc37yrAwD5NpuE43tszAkqlOeLeoeeuyI184TLtkGxTjFWCjR1BuW29AdtFwzyln4PwwkQuG0
+      generate_ssh_key: yes
 
-    - name: Deploy Hadoop bash profile files
-      copy:
-        src: "{{ item }}"
-        dest: /home/hadoop
-        owner: hadoop
-        group: hadoop
-        mode: '0700'
-      with_items:
-        - .bashrc
-        - .bash_profile
+  - name: Deploy Hadoop bash profile files
+    copy:
+      src: "{{ item }}"
+      dest: /home/hadoop
+      owner: hadoop
+      group: hadoop
+      mode: '0700'
+    with_items:
+    - .bashrc
+    - .bash_profile
 
   when: ( group_names | select('match', 'local') | list | length ) == 0
 
 - name: Deploying SSH keys relationships on every Hadoop node
   block:
-    - name: Create hadoop user authorized_keys file and grant read permissions both id_rsa.pub and authorized_keys files
-      file:
-        path: "{{ item }}"
-        state: touch
-        mode: '0644'
-        modification_time: preserve
-        access_time: preserve
-      with_items:
-        - /home/hadoop/.ssh/id_rsa.pub
-        - /home/hadoop/.ssh/authorized_keys
-        - /home/hadoop/.ssh/known_hosts
+  - name: Create hadoop user authorized_keys file and grant read permissions both id_rsa.pub and authorized_keys files
+    file:
+      path: "{{ item }}"
+      state: touch
+      mode: '0644'
+      modification_time: preserve
+      access_time: preserve
+    with_items:
+    - /home/hadoop/.ssh/id_rsa.pub
+    - /home/hadoop/.ssh/authorized_keys
+    - /home/hadoop/.ssh/known_hosts
 
-    - name: Create the .ssh config file
-      copy:
-        dest: /home/hadoop/.ssh/config
-        content: StrictHostKeyChecking no
-        owner: hadoop
-        group: hadoop
-        mode: '0644'
+  - name: Create the .ssh config file
+    copy:
+      dest: /home/hadoop/.ssh/config
+      content: StrictHostKeyChecking no
+      owner: hadoop
+      group: hadoop
+      mode: '0644'
 
-    - name: Include the hadoop user public key into its authorized_keys file
-      shell: |
-        encr=$(awk '{print $2}' /home/hadoop/.ssh/id_rsa.pub)
-        grep ${encr} /home/hadoop/.ssh/authorized_keys
-        [[ $? -ne 0 ]] && cat /home/hadoop/.ssh/id_rsa.pub >> /home/hadoop/.ssh/authorized_keys
-      ignore_errors: yes
+  - name: Include the hadoop user public key into its authorized_keys file
+    shell: |
+      encr=$(awk '{print $2}' /home/hadoop/.ssh/id_rsa.pub)
+      grep ${encr} /home/hadoop/.ssh/authorized_keys
+      [[ $? -ne 0 ]] && cat /home/hadoop/.ssh/id_rsa.pub >> /home/hadoop/.ssh/authorized_keys
+    ignore_errors: true
 
-    - name: Purge previous Hadoop deployment
-      shell: rm -rf /home/hadoop/h* 2>/dev/null
+  - name: Purge previous Hadoop deployment
+    shell: rm -rf /home/hadoop/h* 2>/dev/null
 
   become: true
   become_user: hadoop
@@ -80,17 +80,17 @@
 
 - name: Previous sys tasks
   block:
-    - name: Restart SSH service
-      service:
-        name: sshd
-        state: restarted
+  - name: Restart SSH service
+    service:
+      name: sshd
+      state: restarted
 
-    - name: Install latest Java (with devel), rsync and sshpass
-      yum:
-        name:
-         - java-1.8.0-openjdk*
-         - rsync
-        state: latest
+  - name: Install latest Java (with devel), rsync and sshpass
+    yum:
+      name:
+      - java-1.8.0-openjdk*
+      - rsync
+      state: latest
 
   when: ( group_names | select('match', 'local') | list | length ) == 0
 
@@ -106,7 +106,7 @@
       file=$(find /home/ansible/roles/hadoop/files -type f -name 'hadoop-*' | awk -F'/' '{print $NF}')
       file_prefix=${file%.tar.gz}
       sed -i "s/hadoop_version.*$/hadoop_version: ${file_prefix}/" /home/ansible/roles/hadoop/vars/main.yml
-    ignore_errors: yes
+    ignore_errors: true
 
   when: ( group_names | select('match', 'local') | list | length ) > 0
 
@@ -125,166 +125,166 @@
 
 - name: Decompressing the tarball, updating its environment variables and editing common configuration files
   block:
-    - name: Decompress the tarball and update its environment variables
-      shell: |
-        vers={{ hadoop_version }}
-        cd /home/hadoop
-        tar xfpz /home/hadoop/${vers}.tar.gz
-        sed -i "s/export HADOOP_HOME=.*$/export HADOOP_HOME=\/home\/hadoop\/${vers}/" /home/hadoop/.bashrc
-        sed -i "s/export JAVA_HOME=.*$/export JAVA_HOME=\${JAVA_HOME:-\"\/etc\/alternatives\/jre\"}/" /home/hadoop/${vers}/etc/hadoop/hadoop-env.sh
-        sed -i "s/export HADOOP_CONF_DIR=.*$/export HADOOP_CONF_DIR=\${HADOOP_CONF_DIR:-\"\/home\/hadoop\/${vers}\/etc\/hadoop\"}/" /home/hadoop/${vers}/etc/hadoop/hadoop-env.sh
-        rm -f /home/hadoop/${vers}.tar.gz
+  - name: Decompress the tarball and update its environment variables
+    shell: |
+      vers={{ hadoop_version }}
+      cd /home/hadoop
+      tar xfpz /home/hadoop/${vers}.tar.gz
+      sed -i "s/export HADOOP_HOME=.*$/export HADOOP_HOME=\/home\/hadoop\/${vers}/" /home/hadoop/.bashrc
+      sed -i "s/export JAVA_HOME=.*$/export JAVA_HOME=\${JAVA_HOME:-\"\/etc\/alternatives\/jre\"}/" /home/hadoop/${vers}/etc/hadoop/hadoop-env.sh
+      sed -i "s/export HADOOP_CONF_DIR=.*$/export HADOOP_CONF_DIR=\${HADOOP_CONF_DIR:-\"\/home\/hadoop\/${vers}\/etc\/hadoop\"}/" /home/hadoop/${vers}/etc/hadoop/hadoop-env.sh
+      rm -f /home/hadoop/${vers}.tar.gz
 
-    - name: Configure core-site.xml file
-      blockinfile:
-        path: /home/hadoop/{{ hadoop_version }}/etc/hadoop/core-site.xml
-        insertafter: '<configuration>'
-        marker: <!-- {mark} ANSIBLE MANAGED BLOCK -->
-        block: |
-          <property>
-              <name>fs.default.name</name>
-              <value>hdfs://{{ groups.namenode | first }}:9000</value>
-          </property>
+  - name: Configure core-site.xml file
+    blockinfile:
+      path: /home/hadoop/{{ hadoop_version }}/etc/hadoop/core-site.xml
+      insertafter: '<configuration>'
+      marker: <!-- {mark} ANSIBLE MANAGED BLOCK -->
+      block: |
+        <property>
+            <name>fs.default.name</name>
+            <value>hdfs://{{ groups.namenode | first }}:9000</value>
+        </property>
 
-    - name: Configure hdfs-site.xml file
-      blockinfile:
-        path: /home/hadoop/{{ hadoop_version }}/etc/hadoop/hdfs-site.xml
-        insertafter: '<configuration>'
-        marker: <!-- {mark} ANSIBLE MANAGED BLOCK -->
-        block: |
-          <property>
-              <name>dfs.replication</name>
-              <value>{{ 2 if ( groups.datanode | length < 3 ) else ( groups.datanode | length / 2 ) | int }}</value>
-          </property>
-          <property>
-              <name>dfs.namenode.name.dir</name>
-              <value>file:/home/hadoop/hdfs/namenode</value>
-          </property>
-          <property>
-              <name>dfs.datanode.data.dir</name>
-              <value>file:/home/hadoop/hdfs/datanode</value>
-          </property>
+  - name: Configure hdfs-site.xml file
+    blockinfile:
+      path: /home/hadoop/{{ hadoop_version }}/etc/hadoop/hdfs-site.xml
+      insertafter: '<configuration>'
+      marker: <!-- {mark} ANSIBLE MANAGED BLOCK -->
+      block: |
+        <property>
+            <name>dfs.replication</name>
+            <value>{{ 2 if ( groups.datanode | length < 3 ) else ( groups.datanode | length / 2 ) | int }}</value>
+        </property>
+        <property>
+            <name>dfs.namenode.name.dir</name>
+            <value>file:/home/hadoop/hdfs/namenode</value>
+        </property>
+        <property>
+            <name>dfs.datanode.data.dir</name>
+            <value>file:/home/hadoop/hdfs/datanode</value>
+        </property>
 
-    - name: Configure yarn-site.xml file
-      blockinfile:
-        path: /home/hadoop/{{ hadoop_version }}/etc/hadoop/yarn-site.xml
-        insertafter: '<configuration>'
-        marker: <!-- {mark} ANSIBLE MANAGED BLOCK -->
-        block: |
-          <property>
-              <name>yarn.nodemanager.aux-services</name>
-              <value>mapreduce_shuffle</value>
-          </property>
-          <property>
-              <name>yarn.nodemanager.aux-services.mapreduce.shuffle.class</name>
-              <value>org.apache.hadoop.mapred.ShuffleHandler</value>
-          </property>
-          <property>
-              <name>yarn.resourcemanager.resource-tracker.address</name>
-              <value>{{ groups.namenode | first }}:8025</value>
-          </property>
-          <property>
-              <name>yarn.resourcemanager.scheduler.address</name>
-              <value>{{ groups.namenode | first }}:8035</value>
-          </property>
-          <property>
-              <name>yarn.resourcemanager.address</name>
-              <value>{{ groups.namenode | first }}:8050</value>
-          </property>
-          <property>
-              <name>yarn.nodemanager.resource.memory-mb</name>
-              <value>{{ ( ansible_memtotal_mb * 3 / 4 ) | int }}</value>
-          </property>
-          <property>
-              <name>yarn.scheduler.maximum-allocation-mb</name>
-              <value>{{ ( ansible_memtotal_mb * 3 / 4 ) | int }}</value>
-          </property>
-          <property>
-              <name>yarn.scheduler.minimum-allocation-mb</name>
-              <value>128</value>
-          </property>
-          <property>
-              <name>yarn.nodemanager.vmem-check-enabled</name>
-              <value>false</value>
-          </property>
-          <property>
-              <name>yarn.nodemanager.vmem-pmem-ratio</name>
-              <value>5</value>
-          </property>
+  - name: Configure yarn-site.xml file
+    blockinfile:
+      path: /home/hadoop/{{ hadoop_version }}/etc/hadoop/yarn-site.xml
+      insertafter: '<configuration>'
+      marker: <!-- {mark} ANSIBLE MANAGED BLOCK -->
+      block: |
+        <property>
+            <name>yarn.nodemanager.aux-services</name>
+            <value>mapreduce_shuffle</value>
+        </property>
+        <property>
+            <name>yarn.nodemanager.aux-services.mapreduce.shuffle.class</name>
+            <value>org.apache.hadoop.mapred.ShuffleHandler</value>
+        </property>
+        <property>
+            <name>yarn.resourcemanager.resource-tracker.address</name>
+            <value>{{ groups.namenode | first }}:8025</value>
+        </property>
+        <property>
+            <name>yarn.resourcemanager.scheduler.address</name>
+            <value>{{ groups.namenode | first }}:8035</value>
+        </property>
+        <property>
+            <name>yarn.resourcemanager.address</name>
+            <value>{{ groups.namenode | first }}:8050</value>
+        </property>
+        <property>
+            <name>yarn.nodemanager.resource.memory-mb</name>
+            <value>{{ ( ansible_memtotal_mb * 3 / 4 ) | int }}</value>
+        </property>
+        <property>
+            <name>yarn.scheduler.maximum-allocation-mb</name>
+            <value>{{ ( ansible_memtotal_mb * 3 / 4 ) | int }}</value>
+        </property>
+        <property>
+            <name>yarn.scheduler.minimum-allocation-mb</name>
+            <value>128</value>
+        </property>
+        <property>
+            <name>yarn.nodemanager.vmem-check-enabled</name>
+            <value>false</value>
+        </property>
+        <property>
+            <name>yarn.nodemanager.vmem-pmem-ratio</name>
+            <value>5</value>
+        </property>
 
-    - name: Rename the mapred-site.xml template file
-      shell: cp -p /home/hadoop/{{ hadoop_version }}/etc/hadoop/mapred-site.xml.template /home/hadoop/{{ hadoop_version }}/etc/hadoop/mapred-site.xml
+  - name: Rename the mapred-site.xml template file
+    shell: cp -p /home/hadoop/{{ hadoop_version }}/etc/hadoop/mapred-site.xml.template /home/hadoop/{{ hadoop_version }}/etc/hadoop/mapred-site.xml
 
-    - name: Configure mapred-site.xml file
-      blockinfile:
-        path: /home/hadoop/{{ hadoop_version }}/etc/hadoop/mapred-site.xml
-        insertafter: '<configuration>'
-        marker: <!-- {mark} ANSIBLE MANAGED BLOCK -->
-        block: |
-          <property>
-              <name>mapreduce.framework.name</name>
-              <value>yarn</value>
-          </property>
-          <property>
-              <name>mapreduce.job.tracker</name>
-              <value>{{ groups.namenode | first }}:5431</value>
-          </property>
-          <property>
-              <name>mapred.framework.name</name>
-              <value>yarn</value>
-          </property>
-          <property>
-              <name>yarn.app.mapreduce.am.resource.memory-mb</name>
-              <value>{{ ( ansible_memtotal_mb / 4 ) | int }}</value>
-          </property>
-          <!--<property>
-              <name>yarn.app.mapreduce.am.command-opts</name>
-              <value>{{ ( ( ansible_memtotal_mb / 4 ) - 128 ) | int }}</value>
-          </property>-->
-          <property>
-              <name>mapreduce.map.resource.memory-mb</name>
-              <value>{{ ( ansible_memtotal_mb / 4 ) | int }}</value>
-          </property>
-          <property>
-              <name>mapreduce.reduce.resource.memory-mb</name>
-              <value>{{ ( ansible_memtotal_mb / 4 ) | int }}</value>
-          </property>
-          <property>
-              <name>mapreduce.map.java.opts</name>
-              <value>-Xmx{{ ( ( ansible_memtotal_mb / 4 ) - 128 ) | int }}m</value>
-          </property>
-          <property>
-              <name>mapreduce.reduce.java.opts</name>
-              <value>-Xmx{{ ( ( ansible_memtotal_mb / 4 ) - 128 ) | int }}m</value>
-          </property>
+  - name: Configure mapred-site.xml file
+    blockinfile:
+      path: /home/hadoop/{{ hadoop_version }}/etc/hadoop/mapred-site.xml
+      insertafter: '<configuration>'
+      marker: <!-- {mark} ANSIBLE MANAGED BLOCK -->
+      block: |
+        <property>
+            <name>mapreduce.framework.name</name>
+            <value>yarn</value>
+        </property>
+        <property>
+            <name>mapreduce.job.tracker</name>
+            <value>{{ groups.namenode | first }}:5431</value>
+        </property>
+        <property>
+            <name>mapred.framework.name</name>
+            <value>yarn</value>
+        </property>
+        <property>
+            <name>yarn.app.mapreduce.am.resource.memory-mb</name>
+            <value>{{ ( ansible_memtotal_mb / 4 ) | int }}</value>
+        </property>
+        <!--<property>
+            <name>yarn.app.mapreduce.am.command-opts</name>
+            <value>{{ ( ( ansible_memtotal_mb / 4 ) - 128 ) | int }}</value>
+        </property>-->
+        <property>
+            <name>mapreduce.map.resource.memory-mb</name>
+            <value>{{ ( ansible_memtotal_mb / 4 ) | int }}</value>
+        </property>
+        <property>
+            <name>mapreduce.reduce.resource.memory-mb</name>
+            <value>{{ ( ansible_memtotal_mb / 4 ) | int }}</value>
+        </property>
+        <property>
+            <name>mapreduce.map.java.opts</name>
+            <value>-Xmx{{ ( ( ansible_memtotal_mb / 4 ) - 128 ) | int }}m</value>
+        </property>
+        <property>
+            <name>mapreduce.reduce.java.opts</name>
+            <value>-Xmx{{ ( ( ansible_memtotal_mb / 4 ) - 128 ) | int }}m</value>
+        </property>
 
-    - name: Create masters file
-      lineinfile:
-        path: /home/hadoop/{{ hadoop_version }}/etc/hadoop/masters
-        line: "{{ groups.namenode | first }}"
-        mode: '0644'
-        create: yes
+  - name: Create masters file
+    lineinfile:
+      path: /home/hadoop/{{ hadoop_version }}/etc/hadoop/masters
+      line: "{{ groups.namenode | first }}"
+      mode: '0644'
+      create: yes
 
-    - name: Remove default slaves file
-      file:
-        path: /home/hadoop/{{ hadoop_version }}/etc/hadoop/slaves
-        state: absent
+  - name: Remove default slaves file
+    file:
+      path: /home/hadoop/{{ hadoop_version }}/etc/hadoop/slaves
+      state: absent
 
-    - name: Create slaves file
-      lineinfile:
-        path: /home/hadoop/{{ hadoop_version }}/etc/hadoop/slaves
-        line: "{{ item }}"
-        mode: '0644'
-        create: yes
-      loop: "{{ groups.datanode }}"
+  - name: Create slaves file
+    lineinfile:
+      path: /home/hadoop/{{ hadoop_version }}/etc/hadoop/slaves
+      line: "{{ item }}"
+      mode: '0644'
+      create: yes
+    loop: "{{ groups.datanode }}"
 
-    - name: Create workers file
-      lineinfile:
-        path: /home/hadoop/{{ hadoop_version }}/etc/hadoop/workers
-        line: "{{ item }}"
-        mode: '0644'
-        create: yes
-      loop: "{{ groups.datanode }}"
+  - name: Create workers file
+    lineinfile:
+      path: /home/hadoop/{{ hadoop_version }}/etc/hadoop/workers
+      line: "{{ item }}"
+      mode: '0644'
+      create: yes
+    loop: "{{ groups.datanode }}"
 
   become: true
   become_user: hadoop
@@ -292,32 +292,32 @@
 
 - name: Creating data paths tree by node type
   block:
-    - name: Create common data root path
-      file:
-        path: /home/hadoop/hdfs
-        state: directory
-        owner: hadoop
-        group: hadoop
-        mode: '0700'
-      when: ( group_names | select('match', 'local') | list | length ) == 0
+  - name: Create common data root path
+    file:
+      path: /home/hadoop/hdfs
+      state: directory
+      owner: hadoop
+      group: hadoop
+      mode: '0700'
+    when: ( group_names | select('match', 'local') | list | length ) == 0
 
-    - name: Create Datanodes data path
-      file:
-        path: /home/hadoop/hdfs/datanode
-        state: directory
-        owner: hadoop
-        group: hadoop
-        mode: '0700'
-      when: ( group_names | select('match', 'datanode') | list | length ) > 0
+  - name: Create Datanodes data path
+    file:
+      path: /home/hadoop/hdfs/datanode
+      state: directory
+      owner: hadoop
+      group: hadoop
+      mode: '0700'
+    when: ( group_names | select('match', 'datanode') | list | length ) > 0
 
-    - name: Create Namenode data path
-      file:
-        path: /home/hadoop/hdfs/namenode
-        state: directory
-        owner: hadoop
-        group: hadoop
-        mode: '0700'
-      when: ( group_names | select('match', 'namenode') | list | length ) > 0
+  - name: Create Namenode data path
+    file:
+      path: /home/hadoop/hdfs/namenode
+      state: directory
+      owner: hadoop
+      group: hadoop
+      mode: '0700'
+    when: ( group_names | select('match', 'namenode') | list | length ) > 0
 
 - name: Remove previous datanodes entries from the namenode known_hosts file
   shell: sed -i "/^{{ item }}.*$/d" /home/hadoop/.ssh/known_hosts
@@ -335,35 +335,35 @@
 
 - name: Formating HDFS filesystems, starting Hadoop cluster daemons and deploying MapReduce files in the Namenode
   block:
-    - name: Format Namenode HDFS
-      shell: |
-        . ~/.bash_profile
-        hdfs namenode -format -clusterid {{ clusterid }}
+  - name: Format Namenode HDFS
+    shell: |
+      . ~/.bash_profile
+      hdfs namenode -format -clusterid {{ clusterid }}
 
-    - name: Start Hadoop cluster daemons
-      shell: |
-        . ~/.bash_profile
-        start-dfs.sh
+  - name: Start Hadoop cluster daemons
+    shell: |
+      . ~/.bash_profile
+      start-dfs.sh
 
-    - name: Stop Hadoop cluster daemons
-      shell: |
-        . ~/.bash_profile
-        stop-dfs.sh
+  - name: Stop Hadoop cluster daemons
+    shell: |
+      . ~/.bash_profile
+      stop-dfs.sh
 
-    - name: Start again Hadoop cluster daemons
-      shell: |
-        . ~/.bash_profile
-        start-dfs.sh
+  - name: Start again Hadoop cluster daemons
+    shell: |
+      . ~/.bash_profile
+      start-dfs.sh
 
-    - name: Start Yarn daemons
-      shell: |
-        . ~/.bash_profile
-        start-yarn.sh
+  - name: Start Yarn daemons
+    shell: |
+      . ~/.bash_profile
+      start-yarn.sh
 
-    - name: Deploy MapReduce files keeping its permissions (Ansible copy don't keep it)
-      ansible.posix.synchronize:
-        src: files/MapReduce/
-        dest: /home/hadoop
+  - name: Deploy MapReduce files keeping its permissions (Ansible copy don't keep it)
+    ansible.posix.synchronize:
+      src: files/MapReduce/
+      dest: /home/hadoop
 
   become: true
   become_user: hadoop
@@ -371,19 +371,19 @@
 
 - name: Changing owner and group of deployed files and fixing original HOME permissions
   block:
-    - name: Change owner and group of deployed files
-      file:
-        path: /home/hadoop
-        owner: hadoop
-        group: hadoop
-        state: directory
-        recurse: yes
+  - name: Change owner and group of deployed files
+    file:
+      path: /home/hadoop
+      owner: hadoop
+      group: hadoop
+      state: directory
+      recurse: yes
 
-    - name: Fix original HOME permissions
-      file:
-        path: /home/hadoop
-        state: directory
-        mode: '0700'
+  - name: Fix original HOME permissions
+    file:
+      path: /home/hadoop
+      state: directory
+      mode: '0700'
 
   become: true
   when: ( group_names | select('match', 'namenode') | list | length ) > 0
@@ -393,5 +393,5 @@
     path: "/home/ansible/roles/hadoop/files/{{ hadoop_version }}.tar.gz"
     state: absent
   when: ( group_names | select('match', 'local') | list | length ) > 0
-
+  ignore_errors: true
 ...
